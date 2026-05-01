@@ -1,0 +1,48 @@
+# Claude Code: 作業一時ファイル（セッション管理用）
+.claude/work/
+
+# Claude Code: 進行中の作業ファイル（skill-request など、作業完了後に削除）
+.claude/workspace/
+
+# Claude Code: ローカル個人設定（チームで共有しない）
+.claude/settings.local.json
+**/.claude/settings.local.json
+CLAUDE.local.md
+**/CLAUDE.local.md
+
+# Claude Code: ローカル専用エージェントメモリ
+.claude/agent-memory-local/
+**/.claude/agent-memory-local/
+
+# Claude Code: 個人スクラッチ（一時メモ・下書きの置き場）
+scratch/
+**/scratch/
+*.tmp
+
+# 環境変数・機密情報
+.env
+.env.*
+!.env.example
+secrets/
+**/secrets/
+
+# 言語別・環境別（research 配下で実行する RAG 構築の副産物を想定）
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+target/
+vendor/
+dist/
+build/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
