@@ -15,7 +15,8 @@
       "Bash(git branch:*)",
       "WebFetch(domain:code.claude.com)",
       "WebFetch(domain:docs.claude.com)",
-      "WebFetch(domain:github.com/anthropics)"
+      "WebFetch(domain:github.com/anthropics)",
+      "Write(research-for-local-RAG-for-cc/**)"
     ]
   },
   "enabledMcpjsonServers": [
