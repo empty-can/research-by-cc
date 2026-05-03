@@ -75,7 +75,7 @@ GitHub MCP を使う場合は `GITHUB_TOKEN` 環境変数（OS レベルで設�
 
 | フォルダ | 概要 | CLAUDE.md |
 |---|---|---|
-| `research-for-local-RAG-for-cc/` | （調査内容未記入） | 未作成 |
+| `research-for-local-RAG-for-cc/` | Claude Code から利用するローカル RAG（OSS／商用利用無料プロダクトのみで構築）の調査・設計・フィジビリティ検証・有効性検証 | [CLAUDE.md](research-for-local-RAG-for-cc/CLAUDE.md) |
 
 ## 動作環境
 
