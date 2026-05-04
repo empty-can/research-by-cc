@@ -235,6 +235,17 @@ Why 1: DB マイグレーションがタイムアウト
 - [ ] 対策は症状ではなく根本原因に対処している
 - [ ] 個人ではなくプロセス・システムに焦点を当てている
 
+## 追加リソース
+
+本スキルに付属するサポートドキュメント:
+
+| 種別 | ファイル | 内容 |
+|---|---|---|
+| 例 | [examples/production-incident.md](examples/production-incident.md) | 本番インシデント（支払いサービス障害）の完全分析例 |
+| 例 | [examples/performance-regression.md](examples/performance-regression.md) | パフォーマンスリグレッション（API レイテンシ増加）の分析例 |
+| 参考 | [references/toyota-origins.md](references/toyota-origins.md) | 5-Whys のトヨタにおける起源・コア原則・ソフトウェアへの適用 |
+| 参考 | [references/software-patterns.md](references/software-patterns.md) | ソフトウェア問題に特有の根本原因パターン 8 種とアンチパターン |
+
 ---
 
 *原著: [awesome-skills/5-whys-skill](https://github.com/awesome-skills/5-whys-skill) — MIT License*

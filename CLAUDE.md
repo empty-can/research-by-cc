@@ -84,6 +84,7 @@ research-for-local-RAG-for-cc/
 | skill | `commit-and-pr` | コミット → push → PR 作成を 1 メッセージで連続実行（`disable-model-invocation: true` で明示呼び出し限定） |
 | skill | `orchestrate` | 複数 sub-agent を並列/順次協調させる。**メインセッションで呼ぶ前提**（subagent は subagent を spawn できない仕様への対応） |
 | skill | `request-new-skill` / `review-skill-request` | 上記の skill 追加フロー |
+| skill | `5-whys` | なぜなぜ分析（根本原因特定）。examples/ と references/ にサポートドキュメントあり |
 | agent | `code-reviewer` | git diff ベースのレビュー。Sonnet 固定。大規模変更の後に主体的に呼んでよい |
 | output-style | `code-review` | レビュー結果のフォーマット定義。CRITICAL / IMPORTANT / SUGGESTION / POSITIVE 4 段階 |
 | template | `cross-review/` | クロスレビュー報告書の雛型 3 種（論理整合性 / 実用性 / 作業指示者レビュー）。`.claude/templates/cross-review/README.md` に運用方針 |
