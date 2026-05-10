@@ -63,3 +63,6 @@ research-for-local-RAG-for-cc/【git-ignore】reflection/
 start_claude-code.ps1
 start_claude-code.ps1.bat
 start_claude-code.sh
+
+# リポジトリに慣れるまでの個人参照用メモ（Claude が初回セッションで作成、慣れたら削除予定）
+リポジトリ概要メモ.md
