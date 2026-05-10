@@ -163,6 +163,22 @@ Agent 委任時の実行パターンは `/orchestrate` skill のパターン A/B
 
 これは「Agent で別モデルを呼べない作業」を、メインセッションで非推奨モデルのまま実行することを防ぐためのガード。
 
+## Anthropic 公式ドキュメント調査の手順（暫定ルール）
+
+> **暫定運用**: 本ルールは本格的なローカル RAG 構築完了までの繋ぎ。本格 RAG 完成後は調査ルートが変わり、本ルールは更新または Skill 化される（`research-for-local-RAG-for-cc/improvements/C01-001` / `C01-003` 参照）。
+
+Claude Code / Anthropic API / Claude Agent SDK 等の Anthropic 公式情報を調査する際は、以下の手順を踏む:
+
+1. **セッション開始時に llms.txt をコンテキストに保持する**: 毎セッション開始時、`research-for-local-RAG-for-cc/resources/references/claude-code-llms.txt` を Read で読み込み、Anthropic 公式ドキュメントの全ページカタログをコンテキストに保持する
+2. **調査時はローカル DL 済みファイルを優先する**: llms.txt から関連ページを特定した後、内容を確認する場合は以下のローカル DL 済みファイルを Grep / Read で参照する。WebFetch は基本的に使わない:
+   - 全文: `research-for-local-RAG-for-cc/resources/references/claude-code-llms-full.txt`
+   - 構造（見出し階層）: `research-for-local-RAG-for-cc/resources/references/claude_code_docs_map.md`
+3. **WebFetch を使う条件**: ローカル DL 済みファイルでカバーされない情報（最新 whats-new で DL 未完のもの等）に限定する
+
+**根拠**: WebFetch はネットワーク I/O + Anthropic 側レンダリング往復のコストが発生するが、ローカル Grep は実質ゼロコスト。同等の情報がローカルにある場合、ローカル参照がほぼ確実にローコスト。
+
+**現スコープ**: `research-for-local-RAG-for-cc/resources/references/` 配下にしか llms.txt 群が存在しないため、本ルールは Anthropic 公式ドキュメント限定で機能する。他公式ドキュメント（AWS / Python 等）への一般化は別途検討（`improvements/C01-001` 採用候補 F 参照）。
+
 ## 環境特性
 
 - **OS**: Windows 11（プライマリ） — bash シェル経由で操作。パスは `C:\cc-workspace\research-by-cc` 形式
