@@ -46,3 +46,11 @@ out/
 # OS
 .DS_Store
 Thumbs.db
+
+# Anthropic 公式ドキュメントのナビゲーションファイル
+# 外部の更新スクリプトで定期的に上書きする運用のため Git 追跡対象外
+# （現活動完了後は research-by-cc/resources/references/ へ戻す予定、移行時に当該行も更新）
+research-for-local-RAG-for-cc/resources/references/
+
+# 振り返りメモ（個人的な振り返り用、Git 追跡対象外）
+research-for-local-RAG-for-cc/【git-ignore】reflection/
