@@ -177,7 +177,37 @@ Claude Code / Anthropic API / Claude Agent SDK 等の Anthropic 公式情報を�
 
 **根拠**: WebFetch はネットワーク I/O + Anthropic 側レンダリング往復のコストが発生するが、ローカル Grep は実質ゼロコスト。同等の情報がローカルにある場合、ローカル参照がほぼ確実にローコスト。
 
-**現スコープ**: `research-for-local-RAG-for-cc/resources/references/` 配下にしか llms.txt 群が存在しないため、本ルールは Anthropic 公式ドキュメント限定で機能する。他公式ドキュメント（AWS / Python 等）への一般化は別途検討（`improvements/C01-001` 採用候補 F 参照）。
+**現スコープ**: `research-for-local-RAG-for-cc/resources/references/` 配下にしか llms.txt 群が存在しないため、**ローカル llms.txt + Grep 戦略は Anthropic 公式ドキュメント限定** で機能する。他公式ドキュメント（AWS / ライブラリ等）の調査経路は次節「外部情報源・経路選択ルール（暫定）」を参照。
+
+## 外部情報源・経路選択ルール（暫定）
+
+> **暫定運用**: C01-003（公式ドキュメント調査 Skill 化）完成までの繋ぎ。Skill 完成後は本ルールは Skill 内部の routing logic に吸収される。
+
+### 情報源別の調査経路優先順位
+
+外部情報を調査する際は、情報源に応じて以下の経路を **第一選択** とする。第一選択が失敗・不適合の場合のみフォールバックを使う。
+
+| 情報源 | 第一選択 | フォールバック |
+|---|---|---|
+| Claude Code 公式 docs | ローカル llms.txt + Grep（前節「Anthropic 公式ドキュメント調査の手順」参照）| WebFetch |
+| AWS 公式 docs | `mcp__awslabs__search_documentation` → `mcp__awslabs__read_documentation` / `read_sections` | WebFetch on `docs.aws.amazon.com` |
+| ライブラリ docs（npm / PyPI / 言語標準ライブラリ等） | `mcp__context7__resolve-library-id` → `mcp__context7__query-docs` | WebFetch |
+| 一般 web（上記以外） | WebFetch | — |
+
+### ファイル操作・Web fetch の MCP vs built-in
+
+ファイル操作と Web fetch は **built-in tools を第一選択** とする。MCP 版を使うのは「built-in に対して明確な優位性がある場面」に限定。
+
+| 用途 | 第一選択（built-in）| MCP を使う条件 |
+|---|---|---|
+| ファイル読み書き・編集 | Read / Write / Edit | （MCP 不要、built-in で十分）|
+| 複数ファイル一括読み込み | Read を複数回 | `mcp__filesystem__read_multiple_files` — ターン削減効果が顕著な時のみ |
+| ディレクトリ階層俯瞰 | Glob `**/*` 等 | `mcp__filesystem__directory_tree` — JSON 構造化出力が必要な時のみ |
+| ファイル / 内容検索 | Glob / Grep | （MCP 不要、built-in が高速）|
+| ファイル移動・作成 | Bash `mv` / `mkdir` | （MCP 不要）|
+| Web 取得 + 要約 | WebFetch | （MCP 不要）|
+| 生 HTML / バイナリ / PDF 取得 | — | `mcp__fetch__fetch` — WebFetch は要約処理が入るため不向き |
+| WebFetch がリダイレクト等で失敗 | — | `mcp__fetch__fetch` をフォールバックとして使用 |
 
 ## 環境特性
 
