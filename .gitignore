@@ -54,3 +54,12 @@ research-for-local-RAG-for-cc/resources/references/
 
 # 振り返りメモ（個人的な振り返り用、Git 追跡対象外）
 research-for-local-RAG-for-cc/【git-ignore】reflection/
+
+# Claude Code 起動・推論プロファイル関連スクリプト／設定（当面ローカル管理）
+.claude/apl-inference-profs-creater.bat
+.claude/apl-inference-profs-creater.sh
+.claude/claude.conf.env
+.claude/starter-config/
+start_claude-code.ps1
+start_claude-code.ps1.bat
+start_claude-code.sh
