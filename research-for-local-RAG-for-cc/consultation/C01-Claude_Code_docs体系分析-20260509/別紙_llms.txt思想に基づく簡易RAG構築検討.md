@@ -170,11 +170,12 @@ SELECT body FROM llms_full WHERE source_url = ?;
 | 実装言語 | **Python**（ingestion + runtime query 両方） |
 | 採用理由 | (1) 標準ライブラリ `sqlite3` で完結、外部依存なし／(2) `settings.local.json` の `Bash(python3 *)` で既に実行許可済み、追加権限設定不要／(3) スクリプト内部のファイル I/O は Python プロセス内で完結し Claude Code の権限プロンプトを発生させない |
 | ソースファイル取得方式 | **(a) 事前 DL → ローカル参照**。WebFetch 等での直接参照ではなく、定期 DL されたローカルファイルを ingestion スクリプトが読む。投入データは全量揃った状態で扱う必要があるため |
-| 定期 DL 運用 | **スケジューラされたタスクで実行**（具体仕組みは別途検討） |
+| 定期 DL 運用 | **スケジューラされたタスクで実行**（当面はリポジトリ外部の専用プロジェクトでバッチ実行、将来的に GitHub artifacts + 公式ドキュメント調査 Skill 内の自動更新ロジックへ進化予定） |
 | DB ファイル配置 | `research-for-local-RAG-for-cc/resources/data/anthropic_docs.sqlite`（gitignore 対象、再生成可能） |
-| ソースファイル配置 | `research-for-local-RAG-for-cc/resources/references/`（プロジェクト直下） |
+| ソースファイル配置 | `research-for-local-RAG-for-cc/resources/references/`（プロジェクト直下、**ファイル群は git 追跡対象外**。外部スクリプトで定期上書き、ブランチ間で実体を共有） |
 | スクリプト配置 | `research-for-local-RAG-for-cc/scripts/`（プロジェクト直下） |
 | MCP Server 化 | 本検討範囲外（Python 単独でスタートし、効果検証後に MCP 化を検討する流れで合意） |
+| ソースファイル不在時の挙動 | git 追跡対象外のため新規 clone 環境ではファイルが存在しない可能性あり。`build_db.py` 実装時に「ファイル不在時の分かりやすいエラー表示」「`--check-only` モード等のヘルパー機能」を考慮する |
 
 ### 4.4 論点 4: 適用ファイル層別の使い分け ─ クローズ
 
@@ -198,7 +199,7 @@ Anthropic 公式 Claude Code ドキュメント（`llms.txt` / `llms-full.txt` /
 | DB ファイル配置 | `research-for-local-RAG-for-cc/resources/data/anthropic_docs.sqlite`（gitignore） |
 | スクリプト配置 | `research-for-local-RAG-for-cc/scripts/` |
 | ソースファイル取得 | (a) 事前 DL → ローカル参照。定期 DL はスケジューラされたタスクで運用 |
-| ソースファイル配置 | `research-for-local-RAG-for-cc/resources/references/`（プロジェクト直下、既存ワークスペース直下のソースファイルもここへ移行） |
+| ソースファイル配置 | `research-for-local-RAG-for-cc/resources/references/`（プロジェクト直下、ファイル群は **git 追跡対象外** = 外部スクリプトで定期上書き、ブランチ間で実体共有） |
 
 ### 5.3 想定スクリプト構成
 
@@ -226,6 +227,8 @@ research-for-local-RAG-for-cc/scripts/
 
 本方針の判断時点（2026-05-10）でワークスペース直下 `resources/references/` に既存配置されていた 3 ソースファイル（`claude-code-llms.txt` / `claude-code-llms-full.txt` / `claude_code_docs_map.md`）も、本判断に従いプロジェクト直下に移行する。
 
+**追加判断（2026-05-10、同日後半）**: 上記 3 ソースファイル群について、**ブランチ間での最新化共有** と **タイムリーな更新** を実現するため、Git 追跡対象から除外（`.gitignore` 化）し、リポジトリ外部の専用更新スクリプトで定期上書きする運用に切り替えた。物理ファイルの配置パスは変更せず（既存ドキュメント / 設計の参照修正を不要にする）、Git 管理対象から外すのみ。当面は作業指示者がローカルで専用更新プロジェクトを構築し、将来的には GitHub artifacts 配信 + 公式ドキュメント調査 Skill 内の自動 DL ロジックへ進化予定。
+
 ### 5.6 残課題（本検討範囲外、将来検討対象）
 
 - **MCP Server 化**: runtime query を Python CLI ではなく SQLite MCP Server 経由に移行する選択肢。Python 単独運用での効果検証後に判断
@@ -239,3 +242,4 @@ research-for-local-RAG-for-cc/scripts/
 - 2026-05-10: 初版作成（議論進行中）。背景・スコープ・提案アプローチ・ベクトル RAG との比較を整理、検討中論点 4 件をプレースホルダ化（論点 4 はスコープ確定によりクローズ）
 - 2026-05-10: 論点 1〜3 の議論結果を反映し決定済に更新。§2.3 スキーマを 3 テーブル構成（`llms_index` / `llms_full` + FTS5 / `docs_map`）に確定。§5 結論セクションを記載（採用設計サマリ・確定事項・想定スクリプト構成・運用フロー・残課題）。ソースファイル配置場所のみ TBD 残
 - 2026-05-10: ソースファイル配置場所を `research-for-local-RAG-for-cc/resources/references/`（プロジェクト直下）に確定。§5.5「配置場所に関する補足」を追加（開発期間中はプロジェクト直下、安定後に workspace 直下への昇格検討）。既存ワークスペース直下 3 ソースファイルの移行も併せて方針決定
+- 2026-05-10: ソースファイル群を Git 追跡対象から除外（`.gitignore` 化）、リポジトリ外部の更新スクリプトで定期上書きする運用に切り替え。物理パスは変更せず（既存参照は無修正）、ブランチ間で実体共有。§4.3 / §5.2 に「git 追跡対象外」を明記、§4.3 に「ソースファイル不在時の挙動（build_db.py 実装時の考慮事項）」追加、§5.5 に追加判断記述を追加
