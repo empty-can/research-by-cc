@@ -7,7 +7,32 @@ $input_json = [Console]::In.ReadToEnd()
 $data = $input_json | ConvertFrom-Json
 
 # 1. Model name
-$model = $data.model.display_name
+# display_name is an ARN on the first hook call of each session (Bedrock timing issue).
+# Cache the resolved name per profile ID so the first call can still show a readable name.
+$profileId = ($data.model.id -replace ".*/", "")
+$rawName   = $data.model.display_name
+$cacheFile = "$env:USERPROFILE\.claude\statusline-model-cache.json"
+
+if ($rawName -like "arn:aws:*" -or [string]::IsNullOrEmpty($rawName)) {
+    $model = $profileId
+    if (Test-Path $cacheFile) {
+        try {
+            $cached = (Get-Content $cacheFile -Raw | ConvertFrom-Json).$profileId
+            if (-not [string]::IsNullOrEmpty($cached)) { $model = $cached }
+        } catch {}
+    }
+} else {
+    $model = $rawName
+    try {
+        $ht = @{}
+        if (Test-Path $cacheFile) {
+            (Get-Content $cacheFile -Raw | ConvertFrom-Json).PSObject.Properties |
+                ForEach-Object { $ht[$_.Name] = $_.Value }
+        }
+        $ht[$profileId] = $rawName
+        $ht | ConvertTo-Json | Out-File -FilePath $cacheFile -Encoding utf8
+    } catch {}
+}
 
 # 2. Git branch
 $branch = ""
