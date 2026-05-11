@@ -124,12 +124,7 @@ research-for-local-RAG-for-cc/
 | skill | `5-whys` | なぜなぜ分析（根本原因特定）。examples/ と references/ にサポートドキュメントあり |
 | agent | `code-reviewer` | git diff ベースのレビュー。Sonnet 固定。大規模変更の後に主体的に呼んでよい |
 | output-style | `code-review` | レビュー結果のフォーマット定義。CRITICAL / IMPORTANT / SUGGESTION / POSITIVE 4 段階 |
-| skill | `cross-review` | クロスレビュー報告書の雛型と運用ルール集約 Skill（`paths:` 自動発火、`user-invocable: false`）。テンプレ 3 種 + 詳細運用仕様 + 概観を `.claude/skills/cross-review/` に統合 |
-| skill | `mechanism-builder` | CLAUDE.md / Rule / Skill への仕組み化判断・設計・実装支援。`/mechanism-builder [<対象名>]` で明示実行可。自律検知・提案プロトコルは `.claude/rules/mechanism-builder-detection.md`（常時ロード）に従う |
-
-### 仕組み化判断
-
-繰り返し手順・定型作業の仕組み化が必要と判断した場合のフロー（自律提案・タイミング確認・保留タスク再開）は `.claude/rules/mechanism-builder-detection.md`（常時ロード）に規定する。実装フロー（設計合意・実装・完了通知）は `mechanism-builder` Skill が担う。
+| template | `cross-review/` | クロスレビュー報告書の雛型 3 種（論理整合性 / 実用性 / 作業指示者レビュー）。`.claude/templates/cross-review/README.md` に運用方針 |
 
 ### path-scoped rule
 `.claude/rules/coding-standards.md` は frontmatter の `paths:` で **コードファイル編集時のみロード**される。Markdown だけ触る作業ではロードされないので、コード規約をここに集約してコンテキスト消費を抑えている。プロジェクト固有の言語別規約を追加する場合は同ディレクトリに新ファイルを切る。
@@ -308,31 +303,30 @@ Claude Code / Anthropic API / Claude Agent SDK 等の Anthropic 公式情報を�
 - セッション開始時の `git status --short` 出力で未コミット変更を確認
 - 出力に未コミット項目がある場合、Claude は最初の応答で「未コミット変更の有無」と「直近のコミット候補にすべきか」を作業指示者に確認する
 
-## Claude が生成する一時ファイル・中間成果物の出力先
+### ブランチ運用ルール
 
-Claude が何らかの処理過程で生成する **一時ファイル・中間成果物**（最終成果物ではないが、スクリプト連携や作業途中のデータ受け渡し用、または作業指示者が一度確認するためのファイル）の出力先は、以下のルールに従う。
+各活動テーマと Git ブランチ・活動フォルダを **1:1:1 で対応** させる。これにより、現ブランチから活動フォルダを決定論的に解決でき、Skill / hook 等の自動化資産を機械的に再利用できる。
 
-### 解決フロー
+**命名規約**:
 
-1. **適切な階層の CLAUDE.md（ルート / 個別調査フォルダ / Skill SKILL.md 等）に出力先ルールが明記されている場合**: そのルールに従う
-2. **見つからない場合**: 作業指示者に出力先をその場で確認する。推測で出力先を決めない
+- **feature ブランチ**: 活動テーマにつき 1 本のみ。命名は `feature/<活動テーマ>`、対応する活動フォルダは `research-for-<活動テーマ>/`
+  - 例: `feature/MCP-Srv-Sec-Inspection` ↔ `research-for-MCP-Srv-Sec-Inspection/`
+- **サブブランチ**: フェーズ単位等で feature ブランチから派生させてよい。命名は自由（例: `feature/<活動テーマ>/<フェーズ>` や `fix/<活動テーマ>-<内容>` 等）。**派生元の feature ブランチは活動テーマ識別の起点として保持する**
+- **`main`**: リポジトリ全体（横断的）の作業に使用する
 
-### 本プロジェクトのデフォルト出力先
+**活動フォルダの解決ルール**（Skill / hook 等の自動処理が参照する規約）:
 
-ルートおよび本リポジトリ内の Skill から呼ばれる場合、デフォルトは:
+| 現ブランチの状態 | 活動フォルダ |
+|---|---|
+| 現ブランチが `feature/<X>` 自身、または `feature/<X>` の派生サブブランチ | `research-for-<X>/` |
+| 現ブランチが `main`、または先祖に `feature/<X>` が存在しない | リポジトリルート (`./`) — 横断作業として扱う |
 
-```text
-.claude/workspace/<目的>/
-```
+このルールに従う前提で、Skill 等が依存する解決スクリプトは `.claude/scripts/resolve-activity-dir.sh` に集約する（個別 Skill 内に解決ロジックを埋め込まない）。
 
-- `<目的>` フォルダ名は Skill 名・タスク名と一致させる（例: `.claude/workspace/skill-request/<kebab-name>/`、`.claude/workspace/mechanism-builder/<対象名>/`）。これにより `.claude/skills/<name>/` ↔ `.claude/workspace/<name>/` の対応関係が一目で分かる
-- `.gitignore` 済み（`.claude/workspace/` はコミット対象外）
+**サブブランチ運用の留意事項**:
 
-### 適用範囲
-
-- 本ルールは **本リポジトリ内の全 Skill / Rule / CLAUDE.md** に順次適用していく
-- 新規 Skill 設計時は本ルールに従い、SKILL.md 内に「出力先 = 本ルールに従って解決、ルールがなければ作業指示者に確認」のフローを内蔵する
-- 個別調査フォルダで別の出力先を採用したい場合は、その `CLAUDE.md` に出力先ルールを明記する
+- サブブランチからさらに孫ブランチを作る場合も、最終的な祖先に **1 本の feature ブランチ** が存在する状態を保つ
+- feature ブランチを跨ぐような作業（例: 別テーマへの知見流用）は、いったん main 経由で行うかドキュメント化で対応する
 
 ## よくある作業
 
