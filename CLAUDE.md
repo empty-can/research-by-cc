@@ -7,7 +7,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Claude Code を使って各種テーマを調査するためのワークスペース**であり、製品コードを置く場所ではない。中身は大きく 2 種類:
 
 1. **チーム共有の Claude Code 設定** (`.claude/`) — 全調査で共通利用する skills / agents / rules / output-styles / templates / settings.json
-2. **個別調査フォルダ** (`research-for-xxx/`) — 調査テーマ単位のサブプロジェクト。テーマ固有の `.claude/` / `.mcp.json` / `CLAUDE.md` を任意で持てる
+2. **個別調査フォルダ** (`research-for-xxx/`) — 調査テーマ単位のサブプロジェクト。テーマ固有の `.claude/` / `CLAUDE.md` を任意で持てる
+
+## 組織セキュリティ制約・機微情報の取扱い
+
+本実行環境（および利用者の所属組織の業務環境）には以下の制約がある。**Claude はすべての作業で本節を遵守する**こと。
+
+### MCP サーバの利用制約
+
+- **本環境では MCP サーバは一切利用できない**（情報セキュリティ保護上の制約により、組織として正式に認められていない）。
+- ルート `.mcp.json` / `research-for-xxx/.mcp.json` も配置しない（`research-for-MCP-Srv-Sec-Inspection/` における「調査対象としての MCP」は除く）。
+- 過去ドキュメント（`research-for-local-RAG-for-cc/` 等）に MCP 経由の手順記載が残っているが、それらは過去の検討記録として保存しているもので、**現在の作業で MCP ツールを呼び出してはならない**。`mcp__*` 系ツールは「使えない」前提で代替経路を選ぶ。
+- 外部情報の調査経路は MCP 抜きの構成（ローカル DL ファイル + WebFetch + Web 検索）で組み立てる。
+
+### コミット対象外の機微情報
+
+以下に該当するものは **コミット対象に含めてはいけない**。誤って add してしまった場合は commit 前に必ず除外する。
+
+- **AWS Bedrock 関連設定** — 組織部外秘情報。具体的には以下のファイル群（`.gitignore` 済み、追加で類似ファイルが発生したら `.gitignore` に追加してから扱う）:
+  - `.claude/claude.conf.env`
+  - `.claude/apl-inference-profs-creater.bat` / `.sh`
+  - `.claude/starter-config/`
+  - `start_claude-code.ps1` / `.bat` / `.sh`
+  - 推論プロファイル一覧 CSV / JSON（アカウント名・リージョン情報を含むもの）
+- **アカウント名・認証情報** — AWS アカウント ID / IAM ユーザ名 / アクセスキー / トークン / Windows ユーザ名 (`C:\Users\<name>` 等) を含む文字列。
+- **本プロジェクトルート `research-by-cc/` 外部のフォルダ名を含むパス**（特に絶対パス）— 個人ユーザディレクトリ・組織内ネットワーク共有パス・他リポジトリの絶対パス等。
+
+### パス表記のルール
+
+ドキュメント・コミットメッセージ・Issue・PR の本文で外部パスを書く必要がある場合:
+
+- **本リポジトリ内のパスは相対パス**（`research-by-cc/` 起点、または当該ファイルからの相対）で記載する。
+- **本リポジトリ外を指す必要がある場合**は、絶対パスではなくプレースホルダ化（`<USER_HOME>/` `<外部リポジトリ>/` 等）するか、参照先のリポジトリ名 + 相対パスのみ記載する。
+- 例外的に絶対パスを残す必要がある場合は、ユーザ名・組織情報を含まない部分のみに切り詰める。
+
+### 違反検知時の対応
+
+Claude が編集・コミット・PR 作成等で上記いずれかに違反する／違反しそうな場面を検出した場合は、**作業を一旦止めて作業指示者に確認**する。「気付いた時点で報告」が原則で、自己判断で機微情報を含むコミットを作ってはいけない。
 
 ## 主要な慣習（複数ファイルにまたがるため明示）
 
@@ -19,10 +55,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `CLAUDE.md` — その調査の前提・目的・参照リソース（必須に近い）
 - `.claude/` — そのテーマだけに必要な skill / 設定（必要なら）
-- `.mcp.json` — そのテーマだけに必要な MCP サーバー（必要なら）
 - `reports/` — **成果物の格納先**（後述）
 
 共通で使う設定はルート `.claude/` に入れる（重複させない）。
+
+> **注**: `.mcp.json` は本環境では利用しない（「組織セキュリティ制約・機微情報の取扱い」節参照）。
 
 ### 成果物は `research-for-xxx/reports/<タスク名>/<フェーズ名>/` に置く
 **ルート側に reports は持たない。**調査用フォルダ自体が作業スコープなので、各 `research-for-xxx/` の中に `reports/` を持つ。
@@ -183,6 +220,8 @@ Claude Code / Anthropic API / Claude Agent SDK 等の Anthropic 公式情報を�
 
 > **暫定運用**: C01-003（公式ドキュメント調査 Skill 化）完成までの繋ぎ。Skill 完成後は本ルールは Skill 内部の routing logic に吸収される。
 
+> **環境前提**: 本環境では MCP サーバは利用不可（「組織セキュリティ制約・機微情報の取扱い」節参照）。本節も MCP 抜きの経路で構成している。
+
 ### 情報源別の調査経路優先順位
 
 外部情報を調査する際は、情報源に応じて以下の経路を **第一選択** とする。第一選択が失敗・不適合の場合のみフォールバックを使う。
@@ -190,31 +229,29 @@ Claude Code / Anthropic API / Claude Agent SDK 等の Anthropic 公式情報を�
 | 情報源 | 第一選択 | フォールバック |
 |---|---|---|
 | Claude Code 公式 docs | ローカル llms.txt + Grep（前節「Anthropic 公式ドキュメント調査の手順」参照）| WebFetch |
-| AWS 公式 docs | `mcp__awslabs__search_documentation` → `mcp__awslabs__read_documentation` / `read_sections` | WebFetch on `docs.aws.amazon.com` |
-| ライブラリ docs（npm / PyPI / 言語標準ライブラリ等） | `mcp__context7__resolve-library-id` → `mcp__context7__query-docs` | WebFetch |
-| 一般 web（上記以外） | WebFetch | — |
+| AWS 公式 docs | WebFetch on `docs.aws.amazon.com` | WebSearch |
+| ライブラリ docs（npm / PyPI / 言語標準ライブラリ等） | WebFetch（公式ドキュメントサイトを直接指定） | WebSearch |
+| 一般 web（上記以外） | WebFetch | WebSearch |
 
-### ファイル操作・Web fetch の MCP vs built-in
+### ファイル操作・Web fetch のツール選択
 
-ファイル操作と Web fetch は **built-in tools を第一選択** とする。MCP 版を使うのは「built-in に対して明確な優位性がある場面」に限定。
+ファイル操作・検索・Web 取得はすべて built-in tools を使用する（本環境では MCP 利用不可）。
 
-| 用途 | 第一選択（built-in）| MCP を使う条件 |
-|---|---|---|
-| ファイル読み書き・編集 | Read / Write / Edit | （MCP 不要、built-in で十分）|
-| 複数ファイル一括読み込み | Read を複数回 | `mcp__filesystem__read_multiple_files` — ターン削減効果が顕著な時のみ |
-| ディレクトリ階層俯瞰 | Glob `**/*` 等 | `mcp__filesystem__directory_tree` — JSON 構造化出力が必要な時のみ |
-| ファイル / 内容検索 | Glob / Grep | （MCP 不要、built-in が高速）|
-| ファイル移動・作成 | Bash `mv` / `mkdir` | （MCP 不要）|
-| Web 取得 + 要約 | WebFetch | （MCP 不要）|
-| 生 HTML / バイナリ / PDF 取得 | — | `mcp__fetch__fetch` — WebFetch は要約処理が入るため不向き |
-| WebFetch がリダイレクト等で失敗 | — | `mcp__fetch__fetch` をフォールバックとして使用 |
+| 用途 | 使用ツール |
+|---|---|
+| ファイル読み書き・編集 | Read / Write / Edit |
+| 複数ファイル一括読み込み | Read を複数回（並列実行可） |
+| ディレクトリ階層俯瞰 | Glob `**/*` 等 |
+| ファイル / 内容検索 | Glob / Grep |
+| ファイル移動・作成 | Bash `mv` / `mkdir` |
+| Web 取得 + 要約 | WebFetch |
+| Web 検索 | WebSearch |
 
 ## 環境特性
 
-- **OS**: Windows 11（プライマリ） — bash シェル経由で操作。パスは `C:\cc-workspace\research-by-cc` 形式
-- **Node.js v18+** — MCP サーバー起動用
-- **MCP サーバー** — ルート `.mcp.json` は空。`anthropic-docs` / `context7` / `fetch` / `github` はユーザレベル（`~/.claude/`）で定義済み。テーマ固有の MCP は `research-for-xxx/.mcp.json` に追加する
-- **GitHub MCP** — `GITHUB_TOKEN` 環境変数（OS レベル）が必要
+- **OS**: Windows 11（プライマリ） — bash シェル経由で操作。リポジトリルートは `research-by-cc/`（絶対パスは機微情報のため記載しない方針）
+- **MCP サーバー** — 本環境では利用不可（「組織セキュリティ制約・機微情報の取扱い」節参照）
+- **GitHub 操作** — `gh` CLI を使用（未インストール環境では WebFetch / `git` 標準コマンドで代替）
 - **Git** — Git 化済み・GitHub 公開済み。コミット運用は「Git 運用ルール」節を参照
 
 ## Git 運用ルール
@@ -235,7 +272,8 @@ Claude Code / Anthropic API / Claude Agent SDK 等の Anthropic 公式情報を�
 - **作業中の一時物**（`.claude/work/` / `.claude/workspace/` / `scratch/` / `*.tmp`）— 完了後に削除されるか、別途コミット対象に昇格させる
 - **エージェントメモリのローカル分**（`.claude/agent-memory-local/`）— セッション固有
 - **環境変数・機密情報**（`.env*`（`.env.example` 除く）/ `secrets/`）— `permissions.deny` との二重防御
-- **言語別ビルド成果物**（`node_modules/` / `__pycache__/` 等）— research-for-xxx 配下で RAG 構築コードを実行する想定
+- **AWS Bedrock / 起動・推論プロファイル関連**（`.claude/claude.conf.env` / `.claude/apl-inference-profs-creater.*` / `.claude/starter-config/` / `start_claude-code.*` / 推論プロファイル一覧 CSV/JSON）— 組織部外秘情報。「組織セキュリティ制約・機微情報の取扱い」節に詳細
+- **言語別ビルド成果物**（`node_modules/` / `__pycache__/` 等）— research-for-xxx 配下で構築コードを実行する想定
 - **IDE / OS** ローカル設定 — 個別環境依存
 
 ### コミット運用ルール
