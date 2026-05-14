@@ -1,8 +1,10 @@
 # Claude Code: 作業一時ファイル（セッション管理用）
 .claude/work/
+**/.claude/work/
 
 # Claude Code: 進行中の作業ファイル（skill-request など、作業完了後に削除）
 .claude/workspace/
+**/.claude/workspace/
 
 # Claude Code: ローカル個人設定（チームで共有しない）
 .claude/settings.local.json
