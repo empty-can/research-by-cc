@@ -91,7 +91,7 @@ Claude Code は、データを論理的に解釈、構築することに極め�
 > **クロスレビュー関連ファイルの参照構成（v3.0α-r1 以降）**:
 > - `.claude/rules/cross-review-runtime.md`（path-scoped rule）— レビュー報告書ファイル（`**/レビュー/**/*.md`）またはクロスレビューテンプレ（`.claude/templates/cross-review/*.md`）を読み書きするときに **自動ロード**。セルフレビュー運用ルール（前半 5 回 / 後半 Opus 3 回・Sonnet 4 回 / レビューイ 3 巡 / Round 3 上限なし）・レビューア確認セクション仕様・指摘記載ルール・判断依頼サマリ運用ルール・件数表運用ルール等の詳細運用仕様を集約
 > - `.claude/templates/cross-review/README.md`（v3.0α）— テンプレート 3 種の概観・使い方・基本ルール（指摘ラベル定義・態度区分・版数管理基本）。テンプレ参照時に併せて読む
-> - `research-for-local-RAG-for-cc/ドキュメント執筆ガイドライン.md`（v2.0）— 執筆段階の予防的ガイドライン。レビュー時にも判断基準の一貫性確保のため参照
+> - `research-for-local-RAG-for-cc/.claude/skills/writing-guideline/SKILL.md`（Skill 形式、user-invocable: false + paths 自動発火）— 執筆段階の予防的ガイドライン。レビュー時にも判断基準の一貫性確保のため参照
 >
 > 本節の記載は Level 2（本プロジェクト固有）の上書きとして機能する。サブフォルダ `CLAUDE.md` が存在する場合はそちらが Level 3 として最優先される。`/init` 等で CLAUDE.md を作成する際は、上書きが必要なルールがあれば「レビュー実施ルール」節に明示すること。
 >

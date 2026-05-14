@@ -24,7 +24,7 @@
 4. Opus / Sonnet レビューは Agent に委任（`.claude/skills/orchestrate/` のパターン A: 並列調査を参照）
 5. 作業指示者レビューは作業指示者が直接記入
 
-> レビュー実施前に `research-for-local-RAG-for-cc/ドキュメント執筆ガイドライン.md`（v2.0）も参照すること（判断基準の一貫性確保のため）。
+> レビュー実施前に `.claude/skills/writing-guideline/SKILL.md`（プロジェクトルート相対）も参照すること（判断基準の一貫性確保のため）。
 
 ## レビューフロー
 
