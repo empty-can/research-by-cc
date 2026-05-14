@@ -88,9 +88,9 @@ Claude Code は、データを論理的に解釈、構築することに極め�
 
 本調査における成果物のレビューは以下のルールに従う（作業計画書 v1.0 改訂前事前作業 Pre-24 由来）。
 
-> **クロスレビュー関連ファイルの参照構成（v3.0α-r1 以降）**:
-> - `.claude/rules/cross-review-runtime.md`（path-scoped rule）— レビュー報告書ファイル（`**/レビュー/**/*.md`）またはクロスレビューテンプレ（`.claude/templates/cross-review/*.md`）を読み書きするときに **自動ロード**。セルフレビュー運用ルール（前半 5 回 / 後半 Opus 3 回・Sonnet 4 回 / レビューイ 3 巡 / Round 3 上限なし）・レビューア確認セクション仕様・指摘記載ルール・判断依頼サマリ運用ルール・件数表運用ルール等の詳細運用仕様を集約
-> - `.claude/templates/cross-review/README.md`（v3.0α）— テンプレート 3 種の概観・使い方・基本ルール（指摘ラベル定義・態度区分・版数管理基本）。テンプレ参照時に併せて読む
+> **クロスレビュー関連ファイルの参照構成（v3.0α-r3 以降）**:
+> - `.claude/skills/cross-review/SKILL.md`（Skill 形式、`user-invocable: false` + `paths:` 自動発火）— 概観・使い方・基本ルール（指摘ラベル定義・態度区分・版数管理基本）。レビュー報告書（`**/レビュー/**/*.md`）またはクロスレビュー Skill 配下を読み書きするときに自動ロード。テンプレート 3 種は `templates/` 配下に同梱
+> - `.claude/skills/cross-review/references/runtime-rules.md` — SKILL.md から参照される詳細運用仕様（セルフレビュー運用ルール（前半 5 回 / 後半 Opus 3 回・Sonnet 4 回 / レビューイ 3 巡 / Round 3 上限なし）・レビューア確認セクション仕様・指摘記載ルール・判断依頼サマリ運用ルール・件数表運用ルール等）
 > - `research-for-local-RAG-for-cc/.claude/skills/writing-guideline/SKILL.md`（Skill 形式、user-invocable: false + paths 自動発火）— 執筆段階の予防的ガイドライン。レビュー時にも判断基準の一貫性確保のため参照
 >
 > 本節の記載は Level 2（本プロジェクト固有）の上書きとして機能する。サブフォルダ `CLAUDE.md` が存在する場合はそちらが Level 3 として最優先される。`/init` 等で CLAUDE.md を作成する際は、上書きが必要なルールがあれば「レビュー実施ルール」節に明示すること。
@@ -188,3 +188,4 @@ reports/<タスク名>/ 配下のタスクの進捗を簡潔に記録する。
 - 2026-05-04: 「プロジェクト管理ファイル」節を追加。`improvements/【本紙】要改善点一覧.md` を新規作成（フェーズ 02 振り返り 7 件起票）。`improvements/【雛型】Fxx-xxx_要改善点名.md` を追加（別紙作成用雛型）
 - 2026-05-06: 「レビュー実施ルール」節の冒頭注記を v3.0α 反映で強化（README.md および執筆ガイドライン v2.0 のレビュー実施前必須参照化、セルフレビュー運用ルール・レビューア確認セクション仕様・指摘記載ルールの明示、v3.0α 暫定運用中の旨と既存資産との互換方針を明記）
 - 2026-05-06: クロスレビュー詳細運用仕様を path-scoped rule（`.claude/rules/cross-review-runtime.md`）に分離する v3.0α-r1 構成へ更新。「レビュー実施ルール」節の冒頭注記をファイル分離後の構成に追従（path-scoped rule の自動ロード前提、README は概観・基本ルールのみに集約）。公式ドキュメント（200 行未満推奨・path-scoped rule の context 効率）を踏まえた整理
+- 2026-05-15: クロスレビュー資産を Rule + テンプレ群から Skill 統合構造（`.claude/skills/cross-review/`）へ再構成する v3.0α-r3 構成へ更新。「レビュー実施ルール」節の参照構成を新パスベースに更新。旧 `.claude/rules/cross-review-runtime.md` および `.claude/templates/cross-review/*` はリダイレクト残置

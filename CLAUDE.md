@@ -87,7 +87,7 @@ research-for-local-RAG-for-cc/
 | skill | `5-whys` | なぜなぜ分析（根本原因特定）。examples/ と references/ にサポートドキュメントあり |
 | agent | `code-reviewer` | git diff ベースのレビュー。Sonnet 固定。大規模変更の後に主体的に呼んでよい |
 | output-style | `code-review` | レビュー結果のフォーマット定義。CRITICAL / IMPORTANT / SUGGESTION / POSITIVE 4 段階 |
-| template | `cross-review/` | クロスレビュー報告書の雛型 3 種（論理整合性 / 実用性 / 作業指示者レビュー）。`.claude/templates/cross-review/README.md` に運用方針 |
+| skill | `cross-review` | クロスレビュー報告書の雛型と運用ルール集約 Skill（`paths:` 自動発火、`user-invocable: false`）。テンプレ 3 種 + 詳細運用仕様 + 概観を `.claude/skills/cross-review/` に統合 |
 
 ### path-scoped rule
 `.claude/rules/coding-standards.md` は frontmatter の `paths:` で **コードファイル編集時のみロード**される。Markdown だけ触る作業ではロードされないので、コード規約をここに集約してコンテキスト消費を抑えている。プロジェクト固有の言語別規約を追加する場合は同ディレクトリに新ファイルを切る。

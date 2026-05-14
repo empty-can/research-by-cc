@@ -8,7 +8,7 @@ paths:
 
 # Agent 実行時の permission 事前準備運用ルール（F02-001 派生・横断スコープ）
 
-sub-agent / background Agent を起動する作業に関わるファイル（agent 定義・作業計画書・SKILL.md 等）を読み書きする際に自動ロードされる path-scoped rule。F02-001（background Agent の Write 権限設定漏れ）§5.2.2 採用案の **本格対処の中核実装** であり、`.claude/rules/cross-review-runtime.md`（v3.0α-r1）と並ぶ横断スコープ rule として位置付ける。
+sub-agent / background Agent を起動する作業に関わるファイル（agent 定義・作業計画書・SKILL.md 等）を読み書きする際に自動ロードされる path-scoped rule。F02-001（background Agent の Write 権限設定漏れ）§5.2.2 採用案の **本格対処の中核実装** であり、`.claude/skills/cross-review/`（v3.0α-r3、Skill 構造）と並ぶ横断スコープの仕組みとして位置付ける。
 
 > **採用案ステータス**: F02-001 §5.2 にて **暫定対処（検知ベース対処療法継続）と本格対処（本ファイル＋多層防御）を二段階採用** と確定済。本格対処の最終運用は **クロージング時判断** 対象。本ファイルは中核実装として先行整備し、運用フィードバックを `paths:` 範囲・チェックリスト粒度に反映していく。
 >
@@ -138,7 +138,7 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 
 - F02-001（本要改善点、§5.2.2 採用案の中核実装）: `research-for-local-RAG-for-cc/improvements/F02-001_background_Agent_Write権限設定漏れ.md`
 - F02-013（なぜなぜ分析プロセス改善検討、F02-001 派生）
-- 同種の path-scoped rule 先例: `.claude/rules/cross-review-runtime.md`（v3.0α-r1）
+- 同種の path-scoped 自動ロード先例: `.claude/skills/cross-review/`（v3.0α-r3、Skill 構造）
 - 公式ドキュメント: `code.claude.com/docs/en/permissions` / `code.claude.com/docs/en/permission-modes` / `code.claude.com/docs/en/sub-agents`
 - 既存 settings: `.claude/settings.json`（チーム共有）/ `.claude/settings.local.json`（個人ローカル、`.gitignore` 対象）
 
