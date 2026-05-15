@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# {{スクリプトの目的}}
+#
+# 使用方法:
+#   bash script.sh <arg1> <arg2>
+#
+# 想定実行環境: bash 4+ / Windows は Git Bash または WSL 経由
+#
+# 雛型使用上の注意:
+# - Claude が allowed-tools 設定経由で呼び出すことを想定
+# - 副作用がある場合は SKILL.md の frontmatter で `allowed-tools` を明示
+# - 単体実行可能な単位にすること（依存があるなら scripts/lib/ 等でサブ分割）
+
+set -euo pipefail
+
+ARG1="${1:-}"
+ARG2="${2:-}"
+
+if [ -z "$ARG1" ]; then
+  echo "Usage: bash $0 <arg1> <arg2>" >&2
+  exit 1
+fi
+
+# 本処理
+echo "arg1: $ARG1"
+echo "arg2: $ARG2"
