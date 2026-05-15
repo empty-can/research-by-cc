@@ -12,6 +12,7 @@ Claude Code のプロジェクト構成において「何かを仕組み化し�
 - **判断**: 仕組み化対象を CLAUDE.md / Rule / Skill のどれにすべきかの判断フロー
 - **設計**: Skill とする場合の bundle ファイル設計指針（templates / examples / scripts / references の使い分け）
 - **実装**: 各種ファイルの雛型（SKILL.md / Rule / CLAUDE.md スニペット）
+- **リファクタリング**: 既存 Skill / Rule を本 Skill の判断軸に沿って再評価し、改善提案ファイルを生成（`/mechanism-builder <対象名>`）
 
 ## 2. いつ使うか
 
@@ -19,6 +20,7 @@ Claude Code のプロジェクト構成において「何かを仕組み化し�
 - 「これは CLAUDE.md に書くべき? Rule にすべき? Skill 化すべき?」と迷っている
 - 既存の `Rule + 独自テンプレフォルダ` 等の組み合わせを Skill 統合できないか再評価したい
 - 新規 Skill を作るとき、bundle 構造（templates / examples / scripts / references）の設計指針が欲しい
+- 既存 Skill / Rule を本 Skill の判断軸（公式比較 + 2 軸判定 + bundle 設計）に沿ってリファクタリングしたい（`/mechanism-builder <対象名>` で起動）
 
 ## 3. 判断フロー（要点）
 
@@ -101,7 +103,39 @@ my-skill/
 1. `templates/claude-md-snippet.md.template.md` を参考に、CLAUDE.md の該当節へ追記
 2. 200 行を超えそうな場合は `.claude/rules/<name>.md` に分割して path-scoped 化する
 
-### 5.4 既存構造の再評価
+### 5.4 既存資産のリファクタリング（リファクタリングモード）
+
+既存の Skill / Rule を本 Skill の判断軸（公式比較 + 補完 2 軸判定 + bundle 設計指針）に沿って再評価し、提案ファイルを生成する。**判断 → 提案 まで** がスコープ（実際の編集作業は別タスクで実施）。
+
+#### 起動方法
+
+```text
+/mechanism-builder <対象名>
+```
+
+`<対象名>` は `<name>` / `skill:<name>` / `rule:<name>` の 3 形式に対応。
+
+#### フロー概要（5 ステップ）
+
+1. **対象解決とバリデーション**: `scripts/generate-refactor-proposal.sh validate` で存在チェック・種別判定
+2. **現状読み込み**: 確定した path 配下を Read
+3. **2 軸判定の再適用**: §3.2 の補完 2 軸を現状構成に適用
+4. **bundle 設計レビュー**: §4 の設計指針に照らしてレビュー
+5. **提案ファイル生成**: 分析結果 Markdown をスクリプトに渡し、テンプレ展開で提案ファイル出力
+
+#### 出力先
+
+提案ファイルの出力先は **ルート CLAUDE.md「Claude が生成する一時ファイル・中間成果物の出力先」ルール** に従う。本リポジトリのデフォルトは `.claude/workspace/mechanism-builder/<対象名>/proposal-YYYY-MM-DD.md`。
+
+該当階層の CLAUDE.md にルールがない場合は、推測せず作業指示者に確認する。
+
+#### 詳細フロー
+
+各ステップの詳細・スクリプトの仕様・分析結果 Markdown の構造は [references/refactor-existing.md](references/refactor-existing.md) を参照。
+
+### 5.5 既存構造の手動再評価（簡易）
+
+スクリプトを使わず、手動で既存構造を再評価する場合の手順:
 
 1. 対象資産（Rule + 独自テンプレフォルダ 等）の構成要素を列挙
 2. §3.2 の 2 軸判定を適用
@@ -109,15 +143,25 @@ my-skill/
 
 実例は [references/bundle-design.md](references/bundle-design.md) の「実例」セクションを参照。
 
-## 6. 同梱テンプレート一覧
+## 6. 同梱テンプレート・スクリプト一覧
 
 | ファイル | 用途 |
 |---|---|
 | `templates/new-skill-template/` | 新規 Skill 用 bundle 構造一式（SKILL.md + references/ + templates/ + examples/ + scripts/ のスケルトン） |
 | `templates/new-rule.md.template.md` | 新規 Rule ファイル雛型 |
 | `templates/claude-md-snippet.md.template.md` | CLAUDE.md 追記用スニペット雛型 |
+| `templates/refactor-proposal.md.template.md` | リファクタリングモードの提案ファイル雛型（前提知識ブロック埋め込み済み） |
+| `scripts/generate-refactor-proposal.sh` | リファクタリングモードのバリデーション + テンプレ展開スクリプト |
 
 ## 7. 関連参照
+
+本 Skill 内:
+- [references/decision-flow.md](references/decision-flow.md) — 判断フロー詳細
+- [references/bundle-design.md](references/bundle-design.md) — bundle 設計指針 + 実例
+- [references/refactor-existing.md](references/refactor-existing.md) — リファクタリングモード詳細
+
+プロジェクト全体:
+- ルート CLAUDE.md「Claude が生成する一時ファイル・中間成果物の出力先」節 — 一時ファイル出力先ルール
 
 公式ドキュメント:
 - `code.claude.com/docs/en/features-overview`（Compare similar features セクションに CLAUDE.md vs Rules vs Skills 比較表）
@@ -128,3 +172,4 @@ my-skill/
 ## 変更履歴
 
 - 2026-05-15 版（初版）
+- 2026-05-15: リファクタリングモード追加（既存 Skill / Rule の判断軸再適用 + 提案ファイル生成）
