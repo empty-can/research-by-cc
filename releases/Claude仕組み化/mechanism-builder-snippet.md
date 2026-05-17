@@ -4,13 +4,13 @@
 「作業指示者」はチーム内のタスクオーナー・依頼者を指します（社内文化に応じて読み替え可）。
 
 ブロックの目的:
-- A ブロック: mechanism-builder Skill の利用シーンを Claude が認識し、自律的に invoke 判断できるようにする
+- A ブロック: 仕組み化判断の全体像（自律検知ルール `.claude/rules/mechanism-builder-detection.md` と実装 Skill の役割分担）を CLAUDE.md に記録する。Claude の自律検知・提案フローは detection rule（常時ロード）が担い、本ブロックはその案内役
 - B ブロック: mechanism-builder のリファクタリングモードが提案ファイルを出力する際の出力先ルールを定義する（B を導入しないとリファクタリングモード実行時に Claude が出力先を作業指示者に確認する挙動になる）
 -->
 
 ## 仕組み化判断
 
-同じ手順・プロンプト・チェックリストを 2〜3 回以上繰り返している、あるいは「これは CLAUDE.md に書くべき? Rule にすべき? Skill 化すべき?」と迷う場面では、`mechanism-builder` Skill（`.claude/skills/mechanism-builder/SKILL.md`）を参照する。
+繰り返し手順・定型作業の仕組み化が必要と判断した場合のフロー（自律提案・タイミング確認・保留タスク再開）は `.claude/rules/mechanism-builder-detection.md`（常時ロード）に規定する。実装フロー（設計合意・実装・完了通知）は `mechanism-builder` Skill（`.claude/skills/mechanism-builder/SKILL.md`）が担う。
 
 ### 利用シーン
 

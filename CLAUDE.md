@@ -88,6 +88,11 @@ research-for-local-RAG-for-cc/
 | agent | `code-reviewer` | git diff ベースのレビュー。Sonnet 固定。大規模変更の後に主体的に呼んでよい |
 | output-style | `code-review` | レビュー結果のフォーマット定義。CRITICAL / IMPORTANT / SUGGESTION / POSITIVE 4 段階 |
 | skill | `cross-review` | クロスレビュー報告書の雛型と運用ルール集約 Skill（`paths:` 自動発火、`user-invocable: false`）。テンプレ 3 種 + 詳細運用仕様 + 概観を `.claude/skills/cross-review/` に統合 |
+| skill | `mechanism-builder` | CLAUDE.md / Rule / Skill への仕組み化判断・設計・実装支援。`/mechanism-builder [<対象名>]` で明示実行可。自律検知・提案プロトコルは `.claude/rules/mechanism-builder-detection.md`（常時ロード）に従う |
+
+### 仕組み化判断
+
+繰り返し手順・定型作業の仕組み化が必要と判断した場合のフロー（自律提案・タイミング確認・保留タスク再開）は `.claude/rules/mechanism-builder-detection.md`（常時ロード）に規定する。実装フロー（設計合意・実装・完了通知）は `mechanism-builder` Skill が担う。
 
 ### path-scoped rule
 `.claude/rules/coding-standards.md` は frontmatter の `paths:` で **コードファイル編集時のみロード**される。Markdown だけ触る作業ではロードされないので、コード規約をここに集約してコンテキスト消費を抑えている。プロジェクト固有の言語別規約を追加する場合は同ディレクトリに新ファイルを切る。

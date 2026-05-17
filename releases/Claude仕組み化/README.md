@@ -6,7 +6,8 @@ Claude Code のプロジェクト構成において「同じ手順を繰り返�
 
 | ファイル | 配置先 | 役割 |
 |---|---|---|
-| `mechanism-builder-snippet.md` | （CLAUDE.md にコピペ） | mechanism-builder の利用シーン案内 + 一時ファイル出力先ルールの CLAUDE.md 追記用文言 |
+| `mechanism-builder-snippet.md` | （CLAUDE.md にコピペ） | 仕組み化判断の全体像（検知ルール・実装 Skill の役割分担）案内 + 一時ファイル出力先ルールの CLAUDE.md 追記用文言 |
+| `.claude/rules/mechanism-builder-detection.md` | `<your-project>/.claude/rules/mechanism-builder-detection.md` | A-1（Claude 自律検知・提案）と A-3（保留タスク再開）プロトコル。`paths:` なし（常時ロード） |
 | `.claude/skills/mechanism-builder/SKILL.md` | `<your-project>/.claude/skills/mechanism-builder/SKILL.md` | Skill 入口。`/mechanism-builder` でユーザー実行可、description 経由で Claude の自動 invoke も可 |
 | `.claude/skills/mechanism-builder/references/decision-flow.md` | 同左 | 判断フロー詳細（公式比較表 + 補完 2 軸判定 + Rule + 独自テンプレ移行判断） |
 | `.claude/skills/mechanism-builder/references/bundle-design.md` | 同左 | Skill bundle 設計指針（SKILL.md / references / templates / examples / scripts の使い分け） |
@@ -52,6 +53,7 @@ Claude Code のプロジェクト構成において「同じ手順を繰り返�
 
 ## ファイル間の依存関係
 
+- `mechanism-builder-detection.md` は `paths:` なし（常時ロード）で A-1（Claude 自律検知・提案）と A-3（保留タスク再開）プロトコルを提供。SKILL.md へのリンクで B フロー（設計・実装・通知）に接続する
 - `SKILL.md` は Skill の入口。`user-invocable: true`（デフォルト）のため `/mechanism-builder` で `/` メニューから実行可能
 - `references/` 配下 3 ファイルは Progressive Disclosure に従い、SKILL.md からの相対リンク経由で必要時にロードされる
 - `scripts/generate-refactor-proposal.sh` はリファクタリングモード時に Claude が `bash` 経由で実行する
@@ -79,3 +81,4 @@ Claude Code のプロジェクト構成において「同じ手順を繰り返�
 ## 変更履歴
 
 - 2026-05-15 版（初版）
+- 2026-05-17: `mechanism-builder-detection.md` 追加（A-1 自律検知・A-3 保留再開プロトコル）。`mechanism-builder-snippet.md` Block A を対応する内容に更新

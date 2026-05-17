@@ -22,6 +22,57 @@ Claude Code のプロジェクト構成において「何かを仕組み化し�
 - 新規 Skill を作るとき、bundle 構造（templates / examples / scripts / references）の設計指針が欲しい
 - 既存 Skill / Rule を本 Skill の判断軸（公式比較 + 2 軸判定 + bundle 設計）に沿ってリファクタリングしたい（`/mechanism-builder <対象名>` で起動）
 
+## 実行フロー
+
+### A-2: ユーザーコマンド実行時の入口
+
+| 起動形式 | 処理 |
+|---|---|
+| `/mechanism-builder`（引数なし） | 新規仕組み化として B-1 へ進む。保留中の仕組み化タスクがある場合は先に確認する（`.claude/rules/mechanism-builder-detection.md` §A-3 参照） |
+| `/mechanism-builder <対象名>` | 対象 Skill / Rule のリファクタリングとして B-1（リファクタリング視点）へ進む |
+
+### B-1: 設計案立案・ユーザー合意
+
+実装前に、仕組み化の設計案を立案してユーザーと合意する。
+
+**新規仕組み化の場合**:
+
+1. §3.1 の公式比較軸 + §3.2 の補完 2 軸判定で機構（CLAUDE.md / Rule / Skill）を選定する
+2. Skill とする場合は §4 の bundle 設計指針に従い、名前・frontmatter・bundle 構造を設計する
+3. 以下の形式で設計案を提示する:
+
+   ```
+   【仕組み化設計案】
+   - 機構: Skill / Rule / CLAUDE.md
+   - 名前: <name>
+   - 目的（description）: <説明>
+   - frontmatter 設定: user-invocable / paths / disable-model-invocation
+   - bundle 構造（Skill の場合）: SKILL.md / references / templates / examples / scripts の構成
+   - 想定利用シーン:
+   ```
+
+4. ユーザーのフィードバックを受け、合意に至るまで修正する
+5. 合意後 → B-2 へ
+
+**リファクタリングの場合**（`/mechanism-builder <対象名>`）:
+
+1. `references/refactor-existing.md` の Step 1〜4 に従い分析する
+2. 分析結果を設計変更案として提示し、採用する変更点についてユーザーと合意する
+3. 合意後 → B-2 へ（§5.4 の実装手順を適用）
+
+### B-2: 実装
+
+合意した設計に従って実装する。詳細手順は §5（実装ステップ）を参照。
+
+### B-3: 完了通知
+
+実装完了後、以下をユーザーへ提示する:
+
+- 作成・変更した種別とパス（例: `Skill: .claude/skills/<name>/SKILL.md`）
+- `user-invocable: true` の Skill なら: コマンド（`/<name>`）と機能概要
+- `user-invocable: false` + `paths:` の Skill / Rule なら: 発火条件（どのファイル編集時にロードされるか）
+- 運用上の注意（あれば）
+
 ## 3. 判断フロー（要点）
 
 ### 3.1 公式比較軸（`docs/en/features-overview` の「CLAUDE.md vs Rules vs Skills」より）
@@ -161,6 +212,7 @@ my-skill/
 - [references/refactor-existing.md](references/refactor-existing.md) — リファクタリングモード詳細
 
 プロジェクト全体:
+- `.claude/rules/mechanism-builder-detection.md` — 自律発案（A-1）・保留タスク再開（A-3）プロトコル（常時ロード）
 - ルート CLAUDE.md「Claude が生成する一時ファイル・中間成果物の出力先」節 — 一時ファイル出力先ルール
 
 公式ドキュメント:
@@ -173,3 +225,4 @@ my-skill/
 
 - 2026-05-15 版（初版）
 - 2026-05-15: リファクタリングモード追加（既存 Skill / Rule の判断軸再適用 + 提案ファイル生成）
+- 2026-05-17: 実行フロー（A-2 エントリー / B-1 設計合意 / B-3 完了通知）追加。自律発案・再開プロトコルを `.claude/rules/mechanism-builder-detection.md` に分離
