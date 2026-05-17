@@ -61,6 +61,36 @@ CLAUDE.md / Rule / Skill の選定判断について、公式比較表と補完�
 
 CLAUDE.md が 200 行を超えそうなら、Rule か Skill に分離する（同ページ「Rule of thumb」）。
 
+### 2.1 Hook を選ぶケース（第 4 の機構）
+
+Hook は CLAUDE.md / Rule / Skill とは独立した機構。以下の特性を踏まえて Skill/Rule との住み分けを判断する。
+
+| 観点 | Hook の特性 |
+|---|---|
+| 実行タイミング | lifecycle イベント連動（SessionStart / UserPromptSubmit / UserPromptExpansion / PreToolUse / PostToolUse / PreCompact / Stop 等） |
+| 実行コンテキスト | **Claude のコンテキスト外**で動作（シェルコマンド / HTTP / 別 LLM 呼び出し） |
+| Claude との連携 | `UserPromptSubmit` / `UserPromptExpansion` / `SessionStart` 限定で `additionalContext` を注入可。その他イベントでは Claude が直接参照しない |
+
+**Skill/Rule との住み分け**:
+- 「毎回必ず実行させたい外部処理（ログ・アーカイブ・CI 連携等）」→ Hook
+- 「Claude の reasoning を含む繰り返しワークフロー」→ Skill
+- 「Claude に知識・規約を与える」→ Rule / CLAUDE.md
+
+**設計上の注意点（参照元で確認済み）**:
+- `UserPromptExpansion` は skill/custom コマンドのみに発火。`/compact` / `/clear` 等の **built-in コマンドには発火しない**
+- built-in slash コマンドは同名 Skill を作成しても上書き不可（built-in と user skills は別系統で管理）
+- `PreCompact` hook は compaction 前に動作するが **現在の会話コンテキスト内での Claude reasoning は不可**（外部プロセスのみ）
+
+**参照先（ローカル）**: `research-for-local-RAG-for-cc/resources/references/claude-code-llms-full.txt`
+
+| トピック | 目安行 / キーワード |
+|---|---|
+| Hook ライフサイクル全体・イベント種別表 | 約 21639 行〜 `"Hooks fire at specific points"` |
+| UserPromptSubmit・UserPromptExpansion 仕様 | 約 22574 行〜 |
+| PreCompact 仕様・trigger フィールド | `"PreCompact"` で Grep |
+| Hook 種別（command / http / prompt / mcp_tool / agent） | 約 766 行〜 `"When to use which hook type"` |
+| Built-in slash コマンド一覧 | `"built-in slash commands"` で Grep |
+
 ## 3. 補完判断軸（公式比較表に欠落している観点）
 
 ### 3.1 補助ファイル要否

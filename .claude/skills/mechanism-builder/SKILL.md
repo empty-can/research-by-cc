@@ -37,6 +37,22 @@ Claude Code のプロジェクト構成において「何かを仕組み化し�
 
 **新規仕組み化の場合**:
 
+0. **前提チェック: 既存解の重複確認**（設計着手前に必ず実施）
+
+   同じ目的を達成できる既存解がないかを以下の順で確認し、結果をユーザーへ提示する:
+
+   | 確認対象 | 確認方法 |
+   |---|---|
+   | Claude Code 標準コマンド・hooks | ローカル llms.txt（`research-for-local-RAG-for-cc/resources/references/claude-code-llms-full.txt`）を Grep（`/compact` / hook 一覧 / 関連キーワード） |
+   | インストール済み Skill | `.claude/skills/*/SKILL.md` を Grep（名前・description・機能キーワード） |
+   | インストール済み Rule | `.claude/rules/*.md` を Grep（内容・paths: 条件） |
+
+   - **完全一致する既存解がある場合**: 新規作成不要として B-1 を終了し、既存解への誘導を提示する
+   - **部分一致・近接する既存解がある場合**: ユーザーへ提示し、「既存解を拡張すべきか / 新規作成すべきか」を確認してから進む
+   - **既存解なしの場合**: 確認完了として次のステップへ進む
+
+   > **Hook の扱い**: Hook（`PreCompact` / `UserPromptSubmit` / `PreToolUse` 等）は Skill/Rule とは別の第 4 の機構。「毎回必ず実行させたい外部処理」のニーズには Hook が既存解になり得る。ただし Hook は Claude のコンテキスト外（シェル / HTTP / 別 LLM 呼び出し）で動作し、現在の会話コンテキスト内での Claude reasoning は行えない。Hook の種類・発火条件・設計上の制約は `references/decision-flow.md` §2.1 参照。
+
 1. §3.1 の公式比較軸 + §3.2 の補完 2 軸判定で機構（CLAUDE.md / Rule / Skill）を選定する
 2. Skill とする場合は §4 の bundle 設計指針に従い、名前・frontmatter・bundle 構造を設計する
 3. 以下の形式で設計案を提示する:
@@ -226,3 +242,5 @@ my-skill/
 - 2026-05-15 版（初版）
 - 2026-05-15: リファクタリングモード追加（既存 Skill / Rule の判断軸再適用 + 提案ファイル生成）
 - 2026-05-17: 実行フロー（A-2 エントリー / B-1 設計合意 / B-3 完了通知）追加。自律発案・再開プロトコルを `.claude/rules/mechanism-builder-detection.md` に分離
+- 2026-05-17: B-1 に「前提チェック: 既存解の重複確認」ステップ（手順 0）を追加。新規仕組み化依頼時に標準コマンド・hooks・既存 Skill/Rule を必ず先行確認するフローを制度化
+- 2026-05-17: B-1 step 0 に Hook 参照注記を追加。Hook の設計知見（第 4 の機構・built-in コマンド上書き不可・コンテキスト外動作）を `references/decision-flow.md` §2.1 に集約し、step 0 からポインタ追記
