@@ -11,7 +11,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| レビュー対象 | `research-for-local-RAG-for-cc/reports/02.基礎調査/work/ローカルRAG構築に関するClaude公式の情報追加調査/99.追加調査報告書.md` |
+| レビュー対象 | `research-for-local-RAG-for-cc/reports/02.基礎調査/work/ローカルRAG構築に関するClaude公式の情報追加調査/99.追加調査報告書.md`（レビュー時点パス。**現在は `research-for-local-RAG-for-cc/reports/02.基礎調査/99.最終基礎調査報告/別紙_Claude公式情報追加調査/99.追加調査報告書.md` に正式成果物として昇格・移動済**） |
 | 対象バージョン | Phase 4 構成変更版（2026-05-17 作成、作成者: メインセッション Opus 4.7 + 5 Agent 並列・段階調査の統合） |
 | 全体行数 | 398 行 |
 | レビューイ | Claude Opus 4.7（レビュー対象ドキュメント作成者） |
