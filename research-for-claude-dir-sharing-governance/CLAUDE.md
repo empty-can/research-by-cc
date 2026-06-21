@@ -40,8 +40,8 @@
 - [x] 3 観点クロスレビュー（論理整合性 Opus／実用性＋出典照合 Sonnet／作業指示者ペルソナ Opus）→ v2.6 反映・アンカー検証パス（REFS=DEFS=72）
 - [x] reports/ 昇格・**v1.0 再採番**（2026-06-07）
 - [x] 層2（Plugin/Marketplace）配布物の開発・テスト調査 → 調査結果 v1.0 ＋ 手順書 v1.0（2026-06-21・タスク02）
-- [x] 層2 成果物の Sonnet 動作検証（実機 `claude plugin validate` v2.1.185・2026-06-21）→ 指摘反映（7df3c0b）。副産物で v1.2 マトリクスの `--add-dir`×agents 誤記を発見・訂正（5063ded）
+- [x] 層2 成果物の Sonnet 動作検証（実機 `claude plugin validate` v2.1.185・2026-06-21）→ 指摘反映（7df3c0b）。副産物で v1.2 マトリクスの `--add-dir`×agents 誤記を発見・訂正（5063ded）。※後続の実機検証で**本訂正自体が v2.1.178 版依存**と判明し再訂正（225dda9・下記参照）
 - [x] Marketplace 外資産（CLAUDE.md/rules/settings 等）の開発・テスト調査 → 調査結果 v1.0 ＋ 手順書 v1.0（2026-06-21・タスク02 第2フェーズ `02.Marketplace外資産編`）
-- [ ] 02.Marketplace外資産編 の Sonnet 動作検証（検証コマンド `/memory`・`/status`・`/doctor`・`--add-dir`/`--settings` 結合の実機確認）
+- [x] 02.Marketplace外資産編 の Sonnet 動作検証（2026-06-22・実機）→ **重大検出: subagents×`--add-dir` は v2.1.178 版依存**（v2.1.165=非ロード／v2.1.178+=ロード）。現行✅＋版境界注記へ v1.2 errata 再訂正・出典 [75] 追加（225dda9）。対話実機で **#1 `/memory`＝`<Share>/.claude/CLAUDE.md` ロード確認（案1 生命線）／#2 `/agents`＝`--add-dir` 経由 subagent ロードを一意プローブで立証**。check-payload を案1（Git 追跡基準）へ改修も併施（75cc12d）。実 `<Share>`＝`base-dev-kit-for-cc` を grooming（PR #1）
 - [ ] （任意）公開 `README.md` 作成（CLAUDE.md からの派生・GitHub 閲覧者向け）
 - [ ] （任意）実装スコープ決定（層1のみ／層1+2／層1+2+3）と 3 チャネル構成のテンプレート雛形作成
