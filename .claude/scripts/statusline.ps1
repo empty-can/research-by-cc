@@ -1,69 +1,157 @@
 # .claude/scripts/statusline.ps1
-# Claude Code statusline script for OWX project
-#
-# Display: [Model] branch | Ctx: XX% | $X.XX | +N -N
+# Claude Code statusline - all available elements
 
-$input_json = [Console]::In.ReadToEnd()
-$data = $input_json | ConvertFrom-Json
-
-# 1. Model name
-# display_name is an ARN on the first hook call of each session (Bedrock timing issue).
-# Cache the resolved name per profile ID so the first call can still show a readable name.
-$profileId = ($data.model.id -replace ".*/", "")
-$rawName   = $data.model.display_name
-$cacheFile = "$env:USERPROFILE\.claude\statusline-model-cache.json"
-
-if ($rawName -like "arn:aws:*" -or [string]::IsNullOrEmpty($rawName)) {
-    $model = $profileId
-    if (Test-Path $cacheFile) {
-        try {
-            $cached = (Get-Content $cacheFile -Raw | ConvertFrom-Json).$profileId
-            if (-not [string]::IsNullOrEmpty($cached)) { $model = $cached }
-        } catch {}
-    }
-} else {
-    $model = $rawName
-    try {
-        $ht = @{}
-        if (Test-Path $cacheFile) {
-            (Get-Content $cacheFile -Raw | ConvertFrom-Json).PSObject.Properties |
-                ForEach-Object { $ht[$_.Name] = $_.Value }
-        }
-        $ht[$profileId] = $rawName
-        $ht | ConvertTo-Json | Out-File -FilePath $cacheFile -Encoding utf8
-    } catch {}
+$stream = [Console]::OpenStandardInput()
+$reader = New-Object System.IO.StreamReader($stream, [System.Text.Encoding]::UTF8)
+$input_json = $reader.ReadToEnd().TrimStart([char]0xFEFF)
+try {
+    $data = $input_json | ConvertFrom-Json
+} catch {
+    $data = [PSCustomObject]@{}
 }
 
-# 2. Git branch
-$branch = ""
+$parts = [System.Collections.Generic.List[string]]::new()
+
+# ── Vim mode ──────────────────────────────────────────────────────────────────
+if ($null -ne $data.vim -and -not [string]::IsNullOrEmpty($data.vim.mode)) {
+    $parts.Add("[{0}]" -f $data.vim.mode)
+}
+
+# ── Agent ─────────────────────────────────────────────────────────────────────
+if ($null -ne $data.agent) {
+    $agentLabel = if ($data.agent.name) { $data.agent.name } elseif ($data.agent.type) { $data.agent.type } else { "agent" }
+    if ($data.agent.type -and $data.agent.type -ne $agentLabel) {
+        $agentLabel = "{0}({1})" -f $agentLabel, $data.agent.type
+    }
+    $parts.Add("agent:{0}" -f $agentLabel)
+}
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+$model = $data.model.display_name
+if ([string]::IsNullOrEmpty($model)) { $model = $data.model.id }
+if (-not [string]::IsNullOrEmpty($model)) {
+    $parts.Add("[{0}]" -f $model)
+}
+
+# ── Output style ──────────────────────────────────────────────────────────────
+if ($null -ne $data.output_style -and -not [string]::IsNullOrEmpty($data.output_style.name) -and $data.output_style.name -ne "default") {
+    $parts.Add("style:{0}" -f $data.output_style.name)
+}
+
+# ── Thinking / reasoning ──────────────────────────────────────────────────────
+if ($null -ne $data.thinking -and $data.thinking.enabled -eq $true) {
+    $parts.Add("thinking:on")
+}
+if ($null -ne $data.effort -and -not [string]::IsNullOrEmpty($data.effort.level)) {
+    $parts.Add("effort:{0}" -f $data.effort.level)
+}
+
+# ── Git branch ────────────────────────────────────────────────────────────────
 try {
     $b = git rev-parse --abbrev-ref HEAD 2>$null
     if ($LASTEXITCODE -eq 0 -and $b) {
-        $branch = " $b"
+        $parts.Add($b)
     }
 } catch {}
 
-# 3. Context usage percentage
-$ctx = 0
+# ── Workspace / directory / git repo ─────────────────────────────────────────
+if ($null -ne $data.workspace) {
+    $cwd        = $data.workspace.current_dir
+    $projectDir = $data.workspace.project_dir
+    $addedDirs  = $data.workspace.added_dirs
+    $gitWt      = $data.workspace.git_worktree
+
+    if ($cwd)        { $parts.Add("cwd:{0}" -f $cwd) }
+    if ($projectDir -and $projectDir -ne $cwd) { $parts.Add("proj:{0}" -f $projectDir) }
+    if ($addedDirs -and $addedDirs.Count -gt 0) { $parts.Add("added:{0}" -f ($addedDirs -join ",")) }
+    if ($gitWt)      { $parts.Add("git-wt:{0}" -f $gitWt) }
+
+    $repo = $data.workspace.repo
+    if ($null -ne $repo -and $repo.owner -and $repo.name) {
+        $repoStr = "{0}/{1}" -f $repo.owner, $repo.name
+        if ($repo.host -and $repo.host -ne "github.com") {
+            $repoStr = "{0}/{1}" -f $repo.host, $repoStr
+        }
+        $parts.Add("repo:{0}" -f $repoStr)
+    }
+}
+
+# ── Worktree session ──────────────────────────────────────────────────────────
+if ($null -ne $data.worktree) {
+    $wtName   = $data.worktree.name
+    $wtBranch = $data.worktree.branch
+    $wtLabel  = if ($wtName) { $wtName } elseif ($wtBranch) { $wtBranch } else { "worktree" }
+    if ($wtBranch -and $wtBranch -ne $wtName) {
+        $wtLabel = "{0}({1})" -f $wtLabel, $wtBranch
+    }
+    $parts.Add("wt:{0}" -f $wtLabel)
+}
+
+# ── Open PR ───────────────────────────────────────────────────────────────────
+if ($null -ne $data.pr -and $null -ne $data.pr.number) {
+    $prState = if ($data.pr.review_state) { $data.pr.review_state } else { "open" }
+    $parts.Add("PR#{0}({1})" -f $data.pr.number, $prState)
+}
+
+# ── Context window ────────────────────────────────────────────────────────────
 if ($null -ne $data.context_window -and $null -ne $data.context_window.used_percentage) {
-    $ctx = [math]::Floor($data.context_window.used_percentage)
+    $usedPct = [math]::Floor($data.context_window.used_percentage)
+    $remPct  = if ($null -ne $data.context_window.remaining_percentage) {
+                   [math]::Floor($data.context_window.remaining_percentage)
+               } else { 100 - $usedPct }
+    $ctxStr  = "Ctx:{0}%/{1}%rem" -f $usedPct, $remPct
+
+    $ctxSize  = $data.context_window.context_window_size
+    $totalIn  = $data.context_window.total_input_tokens
+    $totalOut = $data.context_window.total_output_tokens
+
+    if ($ctxSize)   { $ctxStr += "(sz:{0})"    -f ([int64]$ctxSize).ToString("N0") }
+    if ($totalIn)   { $ctxStr += " in:{0}"     -f ([int64]$totalIn).ToString("N0") }
+    if ($totalOut)  { $ctxStr += " out:{0}"    -f ([int64]$totalOut).ToString("N0") }
+
+    $cu = $data.context_window.current_usage
+    if ($null -ne $cu) {
+        $cacheW = if ($cu.cache_creation_input_tokens) { [int64]$cu.cache_creation_input_tokens } else { 0 }
+        $cacheR = if ($cu.cache_read_input_tokens)     { [int64]$cu.cache_read_input_tokens }     else { 0 }
+        if ($cacheW -or $cacheR) {
+            $ctxStr += " cache:w{0}/r{1}" -f $cacheW.ToString("N0"), $cacheR.ToString("N0")
+        }
+    }
+
+    $parts.Add($ctxStr)
+} else {
+    $parts.Add("Ctx:--")
 }
 
-# 4. Session cost
-$cost = 0.0
-if ($null -ne $data.cost -and $null -ne $data.cost.total_cost_usd) {
-    $cost = $data.cost.total_cost_usd
+# ── Rate limits ───────────────────────────────────────────────────────────────
+$rateParts = [System.Collections.Generic.List[string]]::new()
+if ($null -ne $data.rate_limits) {
+    $fiveH = $data.rate_limits.five_hour
+    if ($null -ne $fiveH -and $null -ne $fiveH.used_percentage) {
+        $label = "5h:{0}%" -f [math]::Floor($fiveH.used_percentage)
+        if ($fiveH.resets_at) {
+            $dt = [DateTimeOffset]::FromUnixTimeSeconds([int64]$fiveH.resets_at).LocalDateTime
+            $label += "(rst:{0})" -f $dt.ToString("HH:mm")
+        }
+        $rateParts.Add($label)
+    }
+    $sevenD = $data.rate_limits.seven_day
+    if ($null -ne $sevenD -and $null -ne $sevenD.used_percentage) {
+        $label = "7d:{0}%" -f [math]::Floor($sevenD.used_percentage)
+        if ($sevenD.resets_at) {
+            $dt = [DateTimeOffset]::FromUnixTimeSeconds([int64]$sevenD.resets_at).LocalDateTime
+            $label += "(rst:{0})" -f $dt.ToString("MM-dd HH:mm")
+        }
+        $rateParts.Add($label)
+    }
 }
-$costFmt = '$' + ('{0:F2}' -f $cost)
-
-# 5. Lines added / removed
-$added = 0
-$removed = 0
-if ($null -ne $data.cost) {
-    if ($null -ne $data.cost.total_lines_added)   { $added   = $data.cost.total_lines_added }
-    if ($null -ne $data.cost.total_lines_removed)  { $removed = $data.cost.total_lines_removed }
+if ($rateParts.Count -gt 0) {
+    $parts.Add("limits:{0}" -f ($rateParts -join " "))
 }
-$lines = "+${added} -${removed}"
 
-# Build output
-Write-Output "[$model]$branch | Ctx: ${ctx}% | $costFmt | $lines"
+# ── App version ───────────────────────────────────────────────────────────────
+if (-not [string]::IsNullOrEmpty($data.version)) {
+    $parts.Add("v{0}" -f $data.version)
+}
+
+Write-Output ($parts -join " | ")
