@@ -47,8 +47,8 @@ GitHub 上で公開されている **LSP（Language Server Protocol）連携型�
 - [x] **02. 脆弱性チェック**（対象10件）
   - [x] `01.依存関係スキャン` — ハイブリッド（Primary5=osv-scanner深掘り / Secondary5=軽量照合）。mcpls クリーン、serena 依存面最大、LSP本体も定性評価。テストフィクスチャ除外
   - [x] `02.Issue調査` — 全10件でセキュリティIssue放置なし。serena/code-index-mcp は対応姿勢良好
-- [ ] **03. 総合評価・推奨**
-  - [ ] `01.リスク評価まとめ` — リスク低の候補を推奨リストとして整理
+- [x] **03. 総合評価・推奨**
+  - [x] `01.リスク評価まとめ` — 能力×セキュリティ(脅威モデル後)×運用フットプリント×対応姿勢の4軸で risk-adjusted 最終ランキング。**第1推奨= bug-ops/mcpls・blackwell-systems/agent-lsp**。用途特化= jdtls-mcp/isaacphi、条件付き= serena
 
 ## 成果物の格納先
 
