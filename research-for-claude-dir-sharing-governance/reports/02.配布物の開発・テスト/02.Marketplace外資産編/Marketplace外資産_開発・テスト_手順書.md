@@ -217,7 +217,7 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 
 ### 6.2 落とし穴チェックリスト
 
-「commit したのに効かない」を生む仕様。テスト前に確認する。先頭の **🛠 はスクリプト（check-payload）で自動判定できる項目／🧑 は人手で確認する項目**。
+「commit したのに効かない」を生む仕様。テスト前に確認する。先頭の **🛠 はスクリプト（check-payload）で自動判定できる項目／🧑 は人手で確認する項目**。個人ファイル系の 🛠 は、`<Share>` が git リポジトリなら **Git 追跡されているか**で判定する（**追跡＝FAIL**＝clone に含まれ漏れる／**未追跡で実在＝WARN**＝gitignore 済みで配布はされないが掃除推奨／不在＝PASS）。非 git の素ディレクトリでは実在＝FAIL にフォールバックする。
 
 - [ ] 🧑 **trust 承認後**にテストしているか（clone/テンプレ展開直後は未承認でフル有効化されない。`autoMemoryDirectory`・`extraKnownMarketplaces` の install prompt は trust 後）
 - [ ] 🛠 **project/local では無視される security キー**を repo に書いていないか（効かない・スクリプトは WARN で検出）:
@@ -248,4 +248,5 @@ managed settings で配る場合の確認（詳細は v1.2 案D・本タスク�
 
 ## 変更履歴
 
+- **v1.1（2026-06-22）**: `check-payload`（`scripts/`・bash/PowerShell）を **Git 追跡基準**へ改修（追跡＝FAIL／未追跡で実在＝WARN／不在＝PASS・非 git の素ディレクトリのみ実在＝FAIL）し、共有共通ルールの所在期待を `.claude/CLAUDE.md`（案1）へ変更（ルート `CLAUDE.md` が追跡されている場合は `--add-dir`＋env 漏れを WARN）。§6.2 イントロに個人ファイル系 🛠 の追跡基準判定を明記。`base-dev-kit-for-cc` を実 `<Share>` として整備した実地検証（両版 FAIL=0）に基づく改修。
 - **v1.0（2026-06-21）**: 初版。[調査結果報告書 v1.0](./Marketplace外資産の開発・テスト_調査結果.md) を実務手順に落とし込み（ネイティブ起動・結合3経路・検証コマンド・クリーン隔離・落とし穴・層3 注記）。レビュー反映として §0 に推奨リポジトリ構成（`<Dev>`/`<Other>`/`<Share>`・案1 共有ペイロード＋README 隔離・共有境界の鉄則）、§3 に `--add-dir` の正確な memory ロード範囲、§6 に `CLAUDE.local.md` 漏れ・共有境界の落とし穴を追加。`settings.local.json` 非共有（共有は `settings.json`・マシン全リポの個人既定は `~/.claude/settings.json`）を §3・§6 に追記。本文の用語を §0 図の **`<Dev>`/`<Other>`/`<Share>`** に統一（「config リポ」「`<D>`」「`<W>`」を一掃）。クリーン隔離テスト環境作成スクリプトと落とし穴機械チェックスクリプト（bash/PowerShell 各2本）を `scripts/` に追加し §5・§6 から参照。レビュー反映: §2 を「ロード/発火スモーク」と位置づけ §3（方法B）を**正式機能検証の本命**に再フレーム、§3 の引用を【挙動・仕様】【注意】【禁止・非推奨】に再分類、§5 に `<Other>/.claude` 混入と同名衝突の非検知（`/memory` 等で目視）を追記しスクリプト実行例を手動と同格に併記・「バイセクト」→「二分探索」、§6 チェックリスト各項目に 🛠（スクリプト自動）/🧑（人手）を付与しスクリプト実行例を格上げ。§0 の全体像図を ASCII から **mermaid（GitHub ネイティブ描画）** に変更。§6 に「公開前の必須2コマンド」（`check-payload`＝衛生／`/security-review`＝脆弱性・read-only で空振り無害ゆえ常時実行）を新設し、mermaid に公開前ゲート（⑤）ノードを追加。
