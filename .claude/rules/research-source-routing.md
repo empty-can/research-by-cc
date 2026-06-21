@@ -8,7 +8,13 @@
 
 調査対象が GitHub リポジトリ等の**ローカルに一括取得できるリソース**なら、オンラインに WebFetch するより、ローカルに DL/clone して Grep で検索する方が効率が良い。llms.txt など LLM 向けナビゲーションファイルがあれば、Web ページを Fetch するより直接 Grep する方が速いため、**必ず llms.txt の Read → llms-full.txt の Grep** を行う。
 
-したがって、調査対象がローカル取得できる見込みがある場合、Claude は作業指示者に**事前ローカル取得の可否を確認**し、取得不可の回答を得て初めて WebFetch を使う。ただし**調査対象を検索するためにオンラインへアクセスする作業**（どの資料を読むか探す段階）はこのルールの適用外としてよい。
+したがって、調査対象がローカル取得できる見込みがある場合、Claude は作業指示者に**事前ローカル取得の可否を確認**し、取得不可の回答を得て初めて WebFetch を使う。
+
+ただし以上は**調査対象を取得・精読する段階**の原則であり、その前段の**「どの資料を読むか」を探す discovery 段階は本ルールの適用外**で、オンライン検索を使ってよい。discovery 段階の経路:
+
+- **一般 web の探索 → `WebSearch` を第一選択**（クエリで候補資料・URL を特定する用途。検索エンジンの結果ページ URL を `WebFetch` で叩かない）
+- **情報源が特定済みなら専用検索を使う**: Anthropic 公式＝ローカル llms.txt の Grep ／ AWS＝`mcp__awslabs__search_documentation` ／ ライブラリ＝`mcp__context7__resolve-library-id`（いずれも下表の経路で discovery 兼用）
+- **読む対象が定まったら、取得・精読は本ルール（ローカル優先＋下表の経路）に戻る**
 
 ## 情報源別の調査経路（第一選択 → フォールバック）
 
@@ -19,7 +25,7 @@
 | Claude Code / Anthropic 公式 docs | ローカル DL 済み llms.txt + Grep（下記手順） | WebFetch |
 | AWS 公式 docs | `mcp__awslabs__search_documentation` → `read_documentation` / `read_sections` | WebFetch on `docs.aws.amazon.com` |
 | ライブラリ docs（npm / PyPI / 言語標準ライブラリ等） | `mcp__context7__resolve-library-id` → `query-docs` | WebFetch |
-| 一般 web（上記以外） | WebFetch | — |
+| 一般 web（上記以外） | WebFetch（精読）。探す段階は `WebSearch` | — |
 
 ### Anthropic 公式 docs の調査手順
 
