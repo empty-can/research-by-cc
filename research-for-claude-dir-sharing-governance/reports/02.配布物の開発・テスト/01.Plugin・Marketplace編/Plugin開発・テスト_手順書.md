@@ -78,10 +78,21 @@ my-tool/                     # 手元の開発リポジトリ（=作業ディレ
 ```
 my-plugin/
 ├── .claude-plugin/
-│   └── plugin.json          # name / version / description などのメタdata
+│   └── plugin.json          # name / version / description / author などのメタdata
 ├── skills/hello/SKILL.md    # ユーザー起動コマンドも新規はここ（skills/）に作る
 ├── agents/bar.md
 └── hooks/hooks.json         # 必要なら（スクリプト本体は ${CLAUDE_PLUGIN_ROOT} 参照で同梱）
+```
+
+`plugin.json` の最小例（**`author` はオブジェクト型**で書く点に注意。文字列だと `claude plugin validate` が `expected object, received string` で失敗する）:
+
+```json
+{
+  "name": "my-plugin",
+  "version": "0.1.0",
+  "description": "...",
+  "author": { "name": "チーム名" }
+}
 ```
 
 > ⚠️ **plugin ディレクトリの外を参照しない**こと。install 時に plugin ディレクトリだけがキャッシュへコピーされるため、`../shared/...` のような外部参照は配布後に壊れる。共有したいファイルは plugin 内に収める。
@@ -124,9 +135,19 @@ claude --plugin-url https://example.com/builds/my-plugin.zip
 ```
 my-mp/                       # ローカル marketplace
 ├── .claude-plugin/
-│   └── marketplace.json     # plugins: [{ name, source: "./plugins/my-plugin" }]
+│   └── marketplace.json     # name + owner(必須) + plugins
 └── plugins/
     └── my-plugin/ …
+```
+
+`marketplace.json` の最小例（**`owner` は必須・オブジェクト型**。欠けると `claude plugin validate` が `owner: expected object, received undefined` で失敗する）:
+
+```json
+{
+  "name": "my-mp",
+  "owner": { "name": "チーム名" },
+  "plugins": [{ "name": "my-plugin", "source": "./plugins/my-plugin" }]
+}
 ```
 
 ```bash
@@ -157,6 +178,9 @@ claude plugin validate ./my-plugin
 
 # marketplace を検証（marketplace.json の schema・重複名・source パストラバーサル・バージョン不整合）
 claude plugin validate ./my-mp
+
+# CI 用: 警告もエラー扱い（未承認フィールド・メタデータ欠落等で exit 1）
+claude plugin validate ./my-plugin --strict
 ```
 
 - **公開審査のある Marketplace（本家 `claude-plugins-official` / コミュニティ）へ提出する場合は必須**。レビューパイプラインが提出ごとに同じ検査＋自動セーフティスクリーニングを回すため、ローカルで通しておくのが提出の前提。
@@ -165,7 +189,8 @@ claude plugin validate ./my-mp
 
 ```bash
 claude --debug            # デバッグログ（ファイル出力）。plugin のロード詳細・manifest エラーに加え、
-                          # ロード後の実行時イベントも対象（後述の早見表参照）。debug/ にセッション単位で記録
+                          # ロード後の実行時イベントも対象（後述の早見表参照）。
+                          # 出力先は ~/.claude/debug/<session-id>.txt（セッション単位のファイル）
 claude --debug mcp        # MCP サーバの stderr を確認したい時
 claude --debug hooks      # hook の評価をツール実行ごとにライブ記録したい時
 # /plugin の Errors タブでも LSP パスエラー等を確認できる
@@ -191,10 +216,11 @@ claude --debug hooks      # hook の評価をツール実行ごとにライブ�
 | `--plugin-dir <path>` | plugin を marketplace 登録なしで直接ロード（**開発の主手段**）。`.zip` 可・反復指定で複数 |
 | `--plugin-url <url>` | URL（CI 成果物等）から plugin をロード |
 | `--add-dir <dir>` | 追加ディレクトリのファイルアクセスを付与。**`<dir>/.claude/skills/` は自動ロードされる**（skill テストの結合に有用） |
-| `--debug` | **汎用デバッグログ（ファイル出力。`debug/` にセッション単位で記録）**。plugin の場合はロード詳細・manifest エラーを見られるが、**ロード時専用ではない**——`--debug hooks`（hook 評価をツール実行ごとにライブ記録）・`--debug mcp`（MCP サーバの stderr）のように**ロード後の実行時イベントも対象**。サブチャネル（`hooks`/`mcp`）で対象を絞れる |
+| `--debug` | **汎用デバッグログ（`~/.claude/debug/<session-id>.txt` にセッション単位で出力）**。plugin の場合はロード詳細・manifest エラーを見られるが、**ロード時専用ではない**——`--debug hooks`（hook 評価をツール実行ごとにライブ記録）・`--debug mcp`（MCP サーバの stderr）のように**ロード後の実行時イベントも対象**。サブチャネル（`hooks`/`mcp`）で対象を絞れる（旧 `--mcp-debug` は非推奨・`--debug mcp` を使う） |
 
 > `--add-dir` で渡すのは「`.claude/` を内包する親フォルダ」。フォルダ名自体を `.claude` にすると `<dir>/.claude/.claude/` を探して読まれないので注意。
-> `--add-dir` 単体で読まれる設定は skill のみ。`CLAUDE.md` / `rules` も読ませたい時は環境変数 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を併用（`settings.json` は別経路）。
+> **`--add-dir`（フラグ／`/add-dir`）で `<dir>/.claude/` から自動ロードされる設定**（公式 `docs/permissions` の表）: **skills（`.claude/skills/`・live reload）と subagents（`.claude/agents/`）**、および `settings.json` のうち **`enabledPlugins` / `extraKnownMarketplaces` のみ**。`CLAUDE.md` / `rules` / `CLAUDE.local.md` は環境変数 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を付けた時だけ読まれる。`settings.json` のそれ以外のキー（permissions/hooks 等）・commands・output-styles は読まれない。
+> ⚠️ `permissions.additionalDirectories` 設定経由ではこれら例外は**一切**読まれず、ファイルアクセス付与のみ（自動ロードは `--add-dir` フラグ／`/add-dir` 限定）。
 
 ### セッション内 / CLI コマンド対応
 
@@ -317,7 +343,8 @@ cc --plugin-dir /path/to/plugin-dev
 ## 5. 公開前チェックリスト
 
 - [ ] plugin ディレクトリ外への参照（`../...`）が無い（キャッシュコピーで壊れる）
-- [ ] `claude plugin validate ./my-plugin` がパスする
+- [ ] `plugin.json` の `author` がオブジェクト型／marketplace 配布なら `marketplace.json` に `owner`（オブジェクト・必須）がある
+- [ ] `claude plugin validate ./my-plugin` がパスする（CI では `--strict` も）
 - [ ] marketplace 配布なら `claude plugin validate ./my-mp` もパスする（schema・重複名・source・バージョン整合）
 - [ ] `--plugin-dir` で起動し、skill / command / agent / hook が期待どおり動く
 - [ ] 配布形態（ローカル marketplace install → uninstall → reinstall）で挙動を確認した
@@ -328,4 +355,4 @@ cc --plugin-dir /path/to/plugin-dev
 
 ## 変更履歴
 
-- **v1.0（2026-06-21）**: 初版。[調査結果報告書 v1.0](./Plugin・Marketplace配布物の開発・テスト_調査結果.md) を実務手順に落とし込み。レビュー反映として全体フロー図のローカルリポ明示（A/B/C）、standalone の語義・①の動作検証・②の実施リポ・④ validate の必須/推奨条件・`--debug` の実行時範囲・scaffold の語義・`skill-creator` の機能/URL を補強。`commands/` レガシー指針（§1②）を追記し、純正 `plugin-dev` の節（§4）を `create-plugin` 8 フェーズ表・7 skill・3 agent・6 検証スクリプトまで踏まえて拡充。
+- **v1.0（2026-06-21）**: 初版。[調査結果報告書 v1.0](./Plugin・Marketplace配布物の開発・テスト_調査結果.md) を実務手順に落とし込み。レビュー反映として全体フロー図のローカルリポ明示（A/B/C）、standalone の語義・①の動作検証・②の実施リポ・④ validate の必須/推奨条件・`--debug` の実行時範囲・scaffold の語義・`skill-creator` の機能/URL を補強。`commands/` レガシー指針（§1②）を追記し、純正 `plugin-dev` の節（§4）を `create-plugin` 8 フェーズ表・7 skill・3 agent・6 検証スクリプトまで踏まえて拡充。**Sonnet 動作検証（実機 `claude plugin validate` v2.1.185）反映**: `plugin.json` の `author`＝オブジェクト・`marketplace.json` の `owner`＝必須の最小例追加、`--add-dir` 注記を skills＋subagents に訂正、`--debug` 出力先 `~/.claude/debug/<session-id>.txt` 明記、`validate --strict` 追加。

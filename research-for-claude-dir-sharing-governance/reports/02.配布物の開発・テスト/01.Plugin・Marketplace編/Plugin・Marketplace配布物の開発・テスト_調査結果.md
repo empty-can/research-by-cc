@@ -145,9 +145,18 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 
 ### `--add-dir` と skill の関係（テスト時に有用）
 
-`--add-dir` / `/add-dir` は本来「ファイルアクセス権の付与」であり設定の自動探索はしないが、**skill だけは例外**で、追加ディレクトリ内の `.claude/skills/` は自動ロードされる（`docs/skills`）。
-※ ただし `permissions.additionalDirectories` 設定経由では skill はロードされない（この特例は `--add-dir` フラグ／`/add-dir` コマンドにのみ適用）。
-→ 開発・テストリポジトリ（ローカル）と作業リポジトリを**結合してテスト**する際、skill に関してはこの `--add-dir` 例外が使える。一方で `CLAUDE.md` / `settings.json` 等は `--add-dir` 単体では読まれない（環境変数 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` が別途必要・v1.2 案C）点に注意。
+`--add-dir` / `/add-dir` は本来「ファイルアクセス権の付与」であり設定の自動探索はしないが、**いくつかの構成要素は例外として `<dir>/.claude/` から自動ロードされる**（`docs/permissions` の表）:
+
+| 構成 | `--add-dir` から自動ロード |
+|---|---|
+| skills（`.claude/skills/`） | ✅ live reload |
+| **subagents（`.claude/agents/`）** | ✅ |
+| `settings.json` の `enabledPlugins` / `extraKnownMarketplaces` | ✅（この2キーのみ） |
+| `CLAUDE.md` / `.claude/rules/` / `CLAUDE.local.md` | △ `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を付けた時のみ |
+| `settings.json` のそれ以外（permissions/hooks 等）・commands・output-styles | ❌ |
+
+※ これら例外は **`--add-dir` フラグ／`/add-dir` コマンド限定**。`permissions.additionalDirectories` 設定経由では一切ロードされず、ファイルアクセス付与のみ。
+→ 開発・テストリポジトリ（ローカル）と作業リポジトリを**結合してテスト**する際、**skill と subagent** はこの `--add-dir` 例外で結合できる。`CLAUDE.md` / `rules` は環境変数併用、`settings.json` の大半は別経路（v1.2 案C）。
 
 ---
 
@@ -158,10 +167,14 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 | 手段 | 用途 | 検出内容 | 出典ページ |
 |---|---|---|---|
 | **`claude plugin validate .`**（`/plugin validate .`） | 公開前バリデーション（**公開審査のある Marketplace への提出時は必須／private な独自 Marketplace では推奨**） | marketplace ディレクトリ対象時: `marketplace.json` の schema・重複 plugin 名・source のパストラバーサル・各 `plugin.json` とのバージョン不整合／plugin ディレクトリ対象時: skill・agent・command・hook の frontmatter、`hooks/hooks.json` の JSON 構文 | `docs/plugins` / `docs/plugin-marketplaces` |
-| **`claude --debug`** | 汎用デバッグログ（**ロード時専用ではない**） | plugin の場合はロード詳細（どの plugin がロードされたか・manifest エラー・skill/agent/hook 登録・MCP 初期化）。加えて `--debug hooks`（hook 評価をツール実行ごとにライブ記録）・`--debug mcp`（MCP サーバの stderr）など**ロード後の実行時イベント**も対象。`debug/` にセッション単位で出力 | `docs/plugins-reference` ほか |
+| **`claude --debug`** | 汎用デバッグログ（**ロード時専用ではない**） | plugin の場合はロード詳細（どの plugin がロードされたか・manifest エラー・skill/agent/hook 登録・MCP 初期化）。加えて `--debug hooks`（hook 評価をツール実行ごとにライブ記録）・`--debug mcp`（MCP サーバの stderr）など**ロード後の実行時イベント**も対象。出力先は **`~/.claude/debug/<session-id>.txt`**（セッション単位のファイル） | `docs/plugins-reference` ほか |
 | **`/plugin` の Errors タブ** | ロードエラーの確認 | LSP サーバのパスエラー等 | `docs/plugins-reference` |
 
 > **validate の必須/推奨の別**: 公開審査のある Marketplace（本家 `claude-plugins-official` / コミュニティ）では、レビューパイプラインが提出ごとに `claude plugin validate` と同じ検査＋自動セーフティスクリーニングを回す（`docs/plugins`）ため、ローカルで通しておくことが提出の前提＝**実質必須**。一方 **private な独自 Marketplace（チーム内に閉じる）には審査パイプラインが無いため必須ではない**が、schema・構造・バージョン不整合をローカル/CI で弾けるので**推奨**。
+>
+> **`--strict` オプション（実機確認）**: `claude plugin validate <path> --strict` は警告をエラー扱いにし（未承認フィールド・メタデータ欠落等で exit 1）、CI に組み込む用途に向く。
+>
+> **実機で確認した manifest の必須事項（写経で詰まりやすい点）**: `plugin.json` の `author` は**オブジェクト型**必須（`{"name": ...}`。文字列だと `expected object, received string` で失敗）。`marketplace.json` の `owner` は**必須・オブジェクト型**（欠けると `expected object, received undefined` で失敗）。
 
 ---
 
@@ -209,7 +222,7 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 
 - 本書のフロー（standalone で開発 → 固まったら plugin 化 → ローカル `--plugin-dir` でテスト → validate → Marketplace へ push）は、v1.2 が「層2 へ寄せる」と判断した**機能・拡張資産**の実装・配布ライフサイクルそのものに対応する。v1.2 案B〜B'''（marketplace 型／インライン宣言型／`@skills-dir` 型／seed 焼き込み型）の**どれを選ぶかに依らず、開発・テスト段階は共通してローカル `--plugin-dir` / ローカル marketplace で回す**。
 - **最大の制約 = 配布単位はプラグインディレクトリ単位**で、`CLAUDE.md` / `rules/` / `settings.json` 等のリポジトリ統制設定は plugin 配布外、という点は v1.2 マトリクス②の裏付けであり、Marketplace 開発スコープでは前提。これら「Marketplace で配れない資産」の開発・テストは、本タスクの**後続フェーズ（`02.Marketplace外資産編` 想定）**で扱う。
-- 後続フェーズの**作業仮説**（本書の知見からの推測・要検証）: 「公開の配布用リポジトリと開発・テストリポジトリは別（後者はローカル）」「テストは `--add-dir` 等で配布用リポと開発・テストリポを結合して実施」という構図は、**skill については本書で裏付け済み**（`--add-dir` 配下の `.claude/skills/` は自動ロード）。一方 `CLAUDE.md` / `rules/` / `settings.json` は `--add-dir` 単体では結合されず、別経路（環境変数 / `--settings` / clone 後の物理配置）になる（v1.2 案A パターン2・案C）。後続フェーズはこの差を軸に整理する。
+- 後続フェーズの**作業仮説**（本書の知見からの推測・要検証）: 「公開の配布用リポジトリと開発・テストリポジトリは別（後者はローカル）」「テストは `--add-dir` 等で配布用リポと開発・テストリポを結合して実施」という構図は、**skill と subagent については本書で裏付け済み**（`--add-dir` 配下の `.claude/skills/`・`.claude/agents/` は自動ロード）。一方 `CLAUDE.md` / `rules/` / `settings.json`（の大半）は `--add-dir` 単体では結合されず、別経路（環境変数 / `--settings` / clone 後の物理配置）になる（v1.2 案A パターン2・案C）。後続フェーズはこの差を軸に整理する。
 
 ---
 
@@ -243,4 +256,4 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 
 ## 変更履歴
 
-- **v1.0（2026-06-21）**: 初版。公式 docs（plugins / plugin-marketplaces / plugins-reference / skills）の原文照合に基づき、層2 配布物の開発・テストフロー・手段・制約・検証を整理。レビュー指摘反映として `--debug` の実行時カバー範囲、`validate` の必須/推奨条件、`skill-creator` の機能詳細・公開 URL を補強。純正 `plugin-dev` を README＋`create-plugin.md`／agent 定義／manifest の精読で裏取りし [§6](#plugin-dev) を追加（8 フェーズ詳細・3 agent・6 スクリプト・`commands/` レガシー指針・docs カタログ掲載の確認を含む）。
+- **v1.0（2026-06-21）**: 初版。公式 docs（plugins / plugin-marketplaces / plugins-reference / skills）の原文照合に基づき、層2 配布物の開発・テストフロー・手段・制約・検証を整理。レビュー指摘反映として `--debug` の実行時カバー範囲、`validate` の必須/推奨条件、`skill-creator` の機能詳細・公開 URL を補強。純正 `plugin-dev` を README＋`create-plugin.md`／agent 定義／manifest の精読で裏取りし [§6](#plugin-dev) を追加（8 フェーズ詳細・3 agent・6 スクリプト・`commands/` レガシー指針・docs カタログ掲載の確認を含む）。**Sonnet 動作検証（実機 `claude plugin validate` v2.1.185）の反映**: `plugin.json` の `author` ＝オブジェクト型・`marketplace.json` の `owner` ＝必須、`--add-dir` は skills だけでなく **subagents（`.claude/agents/`）も自動ロード**（§4 訂正）、`--debug` 出力先 `~/.claude/debug/<session-id>.txt`、`validate --strict`。
