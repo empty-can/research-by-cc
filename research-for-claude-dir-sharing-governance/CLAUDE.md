@@ -18,6 +18,9 @@
 | クロスレビュー報告書（3観点・各1.0版） | `reports/01.配布・統制方針調査/レビュー/`（論理整合性／実用性＋出典照合／作業指示者＋人間読み手） |
 | 層2 配布物の開発・テスト 調査結果（v1.0） | `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin・Marketplace配布物の開発・テスト_調査結果.md` |
 | Plugin 開発・テスト手順書（v1.0） | `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md` |
+| Marketplace 外資産の開発・テスト 調査結果（v1.0） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産の開発・テスト_調査結果.md` |
+| Marketplace 外資産 開発・テスト手順書（v1.0） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産_開発・テスト_手順書.md` |
+| 開発・テスト補助スクリプト（clean-test-env / check-payload・bash+PowerShell） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/scripts/` |
 
 ## 参照リソース
 
@@ -37,7 +40,8 @@
 - [x] 3 観点クロスレビュー（論理整合性 Opus／実用性＋出典照合 Sonnet／作業指示者ペルソナ Opus）→ v2.6 反映・アンカー検証パス（REFS=DEFS=72）
 - [x] reports/ 昇格・**v1.0 再採番**（2026-06-07）
 - [x] 層2（Plugin/Marketplace）配布物の開発・テスト調査 → 調査結果 v1.0 ＋ 手順書 v1.0（2026-06-21・タスク02）
-- [ ] 層2 成果物の Sonnet 動作検証（手順書のコマンド・フローの実機確認）
-- [ ] Marketplace 外資産（CLAUDE.md/rules/settings 等）の開発・テスト調査（タスク02 後続フェーズ `02.Marketplace外資産編` 想定）
+- [x] 層2 成果物の Sonnet 動作検証（実機 `claude plugin validate` v2.1.185・2026-06-21）→ 指摘反映（7df3c0b）。副産物で v1.2 マトリクスの `--add-dir`×agents 誤記を発見・訂正（5063ded）
+- [x] Marketplace 外資産（CLAUDE.md/rules/settings 等）の開発・テスト調査 → 調査結果 v1.0 ＋ 手順書 v1.0（2026-06-21・タスク02 第2フェーズ `02.Marketplace外資産編`）
+- [ ] 02.Marketplace外資産編 の Sonnet 動作検証（検証コマンド `/memory`・`/status`・`/doctor`・`--add-dir`/`--settings` 結合の実機確認）
 - [ ] （任意）公開 `README.md` 作成（CLAUDE.md からの派生・GitHub 閲覧者向け）
 - [ ] （任意）実装スコープ決定（層1のみ／層1+2／層1+2+3）と 3 チャネル構成のテンプレート雛形作成
