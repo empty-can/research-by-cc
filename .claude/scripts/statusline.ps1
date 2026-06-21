@@ -94,27 +94,37 @@ if ($null -ne $data.pr -and $null -ne $data.pr.number) {
 }
 
 # ── Context window ────────────────────────────────────────────────────────────
+function FmtTokens([int64]$n) {
+    if ($n -ge 1000000) {
+        return (("{0:F1}" -f ($n / 1000000.0)).TrimEnd('0').TrimEnd('.') + "M")
+    }
+    return (("{0:F1}" -f ($n / 1000.0)).TrimEnd('0').TrimEnd('.') + "k")
+}
+
 if ($null -ne $data.context_window -and $null -ne $data.context_window.used_percentage) {
-    $usedPct = [math]::Floor($data.context_window.used_percentage)
+    $usedPct = [math]::Round($data.context_window.used_percentage)
     $remPct  = if ($null -ne $data.context_window.remaining_percentage) {
-                   [math]::Floor($data.context_window.remaining_percentage)
+                   [math]::Round($data.context_window.remaining_percentage)
                } else { 100 - $usedPct }
-    $ctxStr  = "Ctx:{0}%/{1}%rem" -f $usedPct, $remPct
+    $ctxStr  = "Ctx:{0}%/{1}%" -f $usedPct, $remPct
 
     $ctxSize  = $data.context_window.context_window_size
     $totalIn  = $data.context_window.total_input_tokens
     $totalOut = $data.context_window.total_output_tokens
 
-    if ($ctxSize)   { $ctxStr += "(sz:{0})"    -f ([int64]$ctxSize).ToString("N0") }
-    if ($totalIn)   { $ctxStr += " in:{0}"     -f ([int64]$totalIn).ToString("N0") }
-    if ($totalOut)  { $ctxStr += " out:{0}"    -f ([int64]$totalOut).ToString("N0") }
+    if ($ctxSize)  { $ctxStr += "({0})" -f (FmtTokens ([int64]$ctxSize)) }
+    if ($null -ne $totalIn -or $null -ne $totalOut) {
+        $inStr  = if ($null -ne $totalIn)  { FmtTokens ([int64]$totalIn) }  else { "0" }
+        $outStr = if ($null -ne $totalOut) { FmtTokens ([int64]$totalOut) } else { "0" }
+        $ctxStr += " (I/O):{0}/{1}" -f $inStr, $outStr
+    }
 
     $cu = $data.context_window.current_usage
     if ($null -ne $cu) {
         $cacheW = if ($cu.cache_creation_input_tokens) { [int64]$cu.cache_creation_input_tokens } else { 0 }
         $cacheR = if ($cu.cache_read_input_tokens)     { [int64]$cu.cache_read_input_tokens }     else { 0 }
         if ($cacheW -or $cacheR) {
-            $ctxStr += " cache:w{0}/r{1}" -f $cacheW.ToString("N0"), $cacheR.ToString("N0")
+            $ctxStr += " (R/W):{0}/{1}" -f (FmtTokens $cacheR), (FmtTokens $cacheW)
         }
     }
 
