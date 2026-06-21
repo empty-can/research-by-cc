@@ -43,7 +43,7 @@ GitHub 上で公開されている **LSP（Language Server Protocol）連携型�
   - [x] 先行ランドスケープ確認（2026-06-21・メイン直接実施）— A/B/C 3分類の確定、code-index-mcp=C 判定
   - [x] `01.GitHub検索` — Sonnet subagent 5本で総当たり（角度別 A〜E）→ `候補一覧.md` に統合完了（A:18 / B-Java:4 / B-他言語:4 / C:7）。一次スクリーニング + Phase 2 推奨ショートリスト整理済み
     - Agent A: 汎用ブリッジ網羅 / Agent B: Java特化深掘り（最優先）/ Agent C: Spring Boot・Gradle 対応可否 / Agent D: MCP レジストリ横断 / Agent E: カテゴリC（非LSP型）少数列挙
-  - [ ] `02.評価マトリクス作成` — 評価基準に基づくスコアリングと絞り込み
+  - [x] `02.評価マトリクス作成` — 「jdt.ls適合×保守」重視＋カテゴリC統合の方針で活発17件を採点・ランキング。Phase 2 対象10件（Primary 5 + Secondary 5）＋依存LSP本体スキャンを確定
 - [ ] **02. 脆弱性チェック**
   - [ ] `01.依存関係スキャン` — 絞り込み候補の `package.json` 等を取得し既知 CVE を確認
   - [ ] `02.Issue調査` — セキュリティ関連 Issue の放置状況を確認
