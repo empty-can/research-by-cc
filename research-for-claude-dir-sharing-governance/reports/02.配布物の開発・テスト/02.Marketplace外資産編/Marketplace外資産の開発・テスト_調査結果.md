@@ -58,7 +58,7 @@
 | 資産 | 結合手段 | 備考 |
 |---|---|---|
 | `skills/`（`.claude/skills/`） | **`--add-dir <Share>`** | 自動ロード・**live reload**あり |
-| `agents/`（subagents） | **`--add-dir <Share>`** | 自動ロード（本セッションで確定。v1.2 errata 参照） |
+| `agents/`（subagents） | **`--add-dir <Share>`** | 自動ロード（**v2.1.178+ で対応・v2.1.165 までは非ロード**。v1.2 報告書 errata 参照） |
 | `settings.json` の `enabledPlugins` / `extraKnownMarketplaces` | **`--add-dir <Share>`** | **この2キーのみ**読まれる |
 | `CLAUDE.md` / `.claude/rules/` / `CLAUDE.local.md` | **`--add-dir <Share>` ＋ `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`** | 環境変数が `1` の時のみ。`CLAUDE.local.md` は `local` setting source（既定有効）も条件 |
 | `settings.json`（permissions / hooks / env 等のその他キー） | **`--settings <Share>/.claude/settings.json`** | `--add-dir` では読まれない。command-line precedence でマージ（[§優先順位](#precedence)） |
@@ -243,7 +243,7 @@ config 資産をテストする際、**「リポに commit したのに効かな
 | C6 | `InstructionsLoaded` hook＝どの指示ファイルが・いつ・なぜロードされたかログ。`ConfigChange` hook＝settings 再読込で発火 | `docs/memory` / `docs/hooks` / `docs/settings` |
 | C7 | クリーンテスト＝`CLAUDE_CONFIG_DIR` を空 dir に向け `.claude` 無し dir から起動。managed は残る・Linux/Win 再ログイン・mac は Keychain 継承 | `docs/debug-your-config` / `docs/env-vars` |
 | C8 | settings はファイル監視で即時反映（brief delay）／`model`・`outputStyle` は再起動側／環境変数は起動時のみ／skills ホットリロード・`/reload-skills` | `docs/settings` / `docs/env-vars` / `docs/commands` |
-| C9 | `--add-dir` 例外ロード表（skills/subagents/`enabledPlugins`・`extraKnownMarketplaces`/環境変数で CLAUDE.md・rules）。`additionalDirectories` 設定経由はファイルアクセスのみ | `docs/permissions` |
+| C9 | `--add-dir` 例外ロード表（skills/subagents〔**v2.1.178+**。v2.1.165 までは非ロード〕/`enabledPlugins`・`extraKnownMarketplaces`/環境変数で CLAUDE.md・rules）。`additionalDirectories` 設定経由はファイルアクセスのみ | `docs/permissions` / `docs/sub-agents` |
 | C10 | `--settings` の優先順位（managed>command-line>local>project>user）・マージ規則・deny>ask>allow | `docs/settings` / `docs/permissions` |
 | C11 | `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` で `--add-dir` 先の CLAUDE.md/rules/CLAUDE.local.md をロード | `docs/permissions` |
 | C12 | project/local で無視される security キー（`defaultMode:auto`・`skipDangerousModePermissionPrompt`・`autoMode`・`useAutoModeDuringPlan`） | `docs/settings` / `docs/permission-modes` |
@@ -253,5 +253,6 @@ config 資産をテストする際、**「リポに commit したのに効かな
 
 ## 変更履歴
 
+- **v1.2（2026-06-22）**: subagents×`--add-dir` の **CLI バージョン依存**を反映。§2 結合表・C9 を「**v2.1.178+ で `<Share>/.claude/agents/` をスキャン・ロード／v2.1.165 までは非ロード**」と版境界付きに訂正（v1.2 報告書 errata [75] と整合）。実機検証（item 3）で `cc-docs-config-scopes-expert` の原文照合および新旧スナップショット比較により、当初 errata の「subagents は `--add-dir` で常時ロード」が版依存だったと判明。
 - **v1.1（2026-06-22）**: `base-dev-kit-for-cc` を実 `<Share>` として整備した際の知見を反映。§6 落とし穴に **「配布されるのは Git 追跡分のみ」** を追記——gitignore 済みで未追跡の個人ファイル（`settings.local.json`/`CLAUDE.local.md`）は作業ツリーに実在しても clone には乗らず参照側へ漏れない（誤って追跡したものは漏れるため `git rm --cached`＋`.gitignore`）。対の手順書の `check-payload`（`scripts/`）を**追跡基準**へ改修（追跡＝FAIL／未追跡で実在＝WARN／不在＝PASS・非 git の素ディレクトリのみ実在＝FAIL）し、共有共通ルールの所在期待を `.claude/CLAUDE.md` へ変更（ルート `CLAUDE.md` が追跡されている場合は `--add-dir`＋env 漏れを WARN）。bash/PowerShell 両版で FAIL=0 を実走確認。
 - **v1.0（2026-06-21）**: 初版。`cc-docs-config-scopes-expert`／`cc-docs-permissions-sandbox-expert` の原文照合に基づき、Marketplace 外資産（config 資産）の開発・テスト方法（ネイティブロード・結合手段3経路・ロード検証コマンド・クリーン隔離テスト・反映タイミング・落とし穴・層3 注記）を整理。レビュー反映として §2 に **`--add-dir` の正確な memory ロード範囲**（ルート/`.claude/` 両 `CLAUDE.md`＋`rules`＋`CLAUDE.local.md` を環境変数 all-or-nothing で一括ロード・共有境界は `--add-dir` 範囲で制御・`CLAUDE.local.md` gotcha・出典 `docs/memory`）と **§9 推奨リポジトリ構成（`<Dev>`/`<Other>`/`<Share>`・案1＝共有ペイロード専用＋README 隔離）** を追加。さらに **`settings.local.json` は共有不可**（共有は `settings.json`／マシン全リポの個人既定は `~/.claude/settings.json`〔`~/.claude/settings.local.json` は非存在〕）を §2・§6 に追記。用語を手順書と揃え **`<D>`→`<Share>`・「config リポ」→`<Share>`/`<Other>`** に統一（対の手順書に開発・テスト補助スクリプト `scripts/` を追加）。レビュー反映: (A) ネイティブ確認＝スモーク・(B) 結合テスト＝**正式機能検証の本命**と明確化、方法B の `<Other>/.claude` 混入と**同名衝突が警告なく解決される**点（`/memory` 等で目視・クリーン隔離で回避）を §エグゼクティブサマリ・§6 に追記。**公開前の必須ゲート**として `check-payload`（衛生）＋ `/security-review`（脆弱性・read-only・空振り無害）の併用を §9 に追記し出典 C15（`docs/security-guidance`）を追加。
