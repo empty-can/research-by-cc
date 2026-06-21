@@ -133,6 +133,7 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 - **`/orchestrate` パターン A 並列実行時の長尾事象**: F02-001 §4.4 のとおり、Write（2026-05-03）→ Edit（2026-05-04 事前追加）→ Bash 読み取り系（`afea8b8`）と段階的に表面化した。事前列挙だけでは捕まらない長尾を §2 検出ベースで吸収する設計
 - **`bypassPermissions` の盲点**: `.git` / `.claude` / `.vscode` / `.idea` / `.husky` への書き込みも通過する。本プロジェクトの security 方針（deny 明示）と相性悪く非推奨
 - **fork mode 時の特殊挙動**: fork 時は `background` フィールドに関係なく全 spawn が background 化し、permission は事前承認フローに乗る。`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` で同期化可能
+- **sub-agent に渡すファイルパスの形式不一致（2026-06-22 追記）**: `Write(research-for-X/**)` のような **cwd 相対**の allow ルールは、sub-agent に **絶対パス（`C:\...` → POSIX 化 `/c/...`）** で Edit/Write させると**マッチせず拒否**される（§3.4 のパス4形式参照）。実例: 同一フォルダへの書き込みでも、相対パスを渡した agent は通り、絶対パスを渡した agent だけ拒否された。**対策**: (a) sub-agent のプロンプトでは **cwd 相対パスで統一**する（第一選択）、(b) 絶対パスを使う運用なら allow に `//c/.../**` と `/c/.../**` の**両形式**を追加する。長尾事象として §2 の検出ベース復旧にも該当
 
 ## 4. 関連バックログ・参照
 
@@ -147,3 +148,4 @@ sub-agent / background Agent を起動する作業の着手前に、以下 3 ス
 ## 変更履歴
 
 - 2026-05-07: 初版作成（Claude Opus 4.7、F02-001 §5.2.2 採用案の中核実装。案 1 + 案 2 + 案 5 を統合配置）
+- 2026-06-22: §3.6 に「sub-agent に渡すファイルパスの形式不一致」落とし穴を追記（LSP連携MCP調査で絶対パス渡しによる Write 拒否が発生。cwd 相対統一 or 両形式 allow で対処）
