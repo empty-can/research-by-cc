@@ -141,22 +141,17 @@ if ($null -ne $data.rate_limits) {
         $label = "5h:{0}%" -f [math]::Floor($fiveH.used_percentage)
         if ($fiveH.resets_at) {
             $dt = [DateTimeOffset]::FromUnixTimeSeconds([int64]$fiveH.resets_at).LocalDateTime
-            $label += "(rst:{0})" -f $dt.ToString("HH:mm")
+            $label += "(rst {0})" -f $dt.ToString("HH:mm")
         }
         $rateParts.Add($label)
     }
     $sevenD = $data.rate_limits.seven_day
     if ($null -ne $sevenD -and $null -ne $sevenD.used_percentage) {
-        $label = "7d:{0}%" -f [math]::Floor($sevenD.used_percentage)
-        if ($sevenD.resets_at) {
-            $dt = [DateTimeOffset]::FromUnixTimeSeconds([int64]$sevenD.resets_at).LocalDateTime
-            $label += "(rst:{0})" -f $dt.ToString("MM-dd HH:mm")
-        }
-        $rateParts.Add($label)
+        $rateParts.Add("7d:{0}%" -f [math]::Floor($sevenD.used_percentage))
     }
 }
 if ($rateParts.Count -gt 0) {
-    $parts.Add("limits:{0}" -f ($rateParts -join " "))
+    $parts.Add("limits {0}" -f ($rateParts -join " "))
 }
 
 # ── App version ───────────────────────────────────────────────────────────────
