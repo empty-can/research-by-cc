@@ -1,12 +1,22 @@
 # CLAUDE.local.md
 
-このファイルは個人用の補足指示を記述するためのテンプレートです。
-使用する場合はコピーして `CLAUDE.local.md` にリネームしてください。
-`.gitignore` で除外されるため、チームメイトには共有されません。
+このファイルは**個人用・マシン固有の補足指示**を記述するテンプレートです。公式の「Local instructions」スコープに相当し、`.gitignore` で除外されるためチームメイトには共有されません。
+使用する場合は、これをプロジェクトルートの `CLAUDE.local.md` にコピーして編集してください（ルート `CLAUDE.md` と同様に毎セッション自動ロードされます）。
 
-## 個人用の追加指示
+## ローカルリソースの実体パス（マシン依存）
+
+`.claude/rules/research-source-routing.md` が参照する、ローカル DL 済みドキュメントの絶対パス。環境ごとに異なるためここで定義します（プレースホルダを自分の環境に合わせて書き換える）。
+
+- Claude Code Docs（llms.txt 群）: `<例: C:\path\to\official-llms-txts\code.claude.com\docs>`
+- modelcontextprotocol.io（MCP）公式ドキュメント: `<例: C:\path\to\official-llms-txts\modelcontextprotocol.io>`
+- その他の公式リソース: （無し）
+
+## 個人用の追加指示（任意）
 
 例:
+
 - エディタ固有の癖（vim モード等）を考慮してほしい
 - 特定のログ出力形式を好む
 - 個人環境でのみ利用できる外部サービス（あれば）
+
+> **worktree をまたぐ場合**: gitignore された `CLAUDE.local.md` は作成した worktree にしか存在しない。複数 worktree で個人指示を共有したい場合は、ホーム配下のファイルを `CLAUDE.md` 等から `@~/.claude/<file>.md` で import する（import はバッククォートで囲むと無効化される点に注意）。
