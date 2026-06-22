@@ -1,0 +1,25 @@
+# 個人ローカル設定（共有しない）
+.claude/settings.local.json
+CLAUDE.local.md
+
+# 環境変数・機密情報（.env.example は配布する）
+.env
+.env.*
+!.env.example
+secrets/
+
+# 作業中の一時物
+.claude/work/
+.claude/workspace/
+scratch/
+*.tmp
+
+# 言語別ビルド成果物
+node_modules/
+__pycache__/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,30 @@
+# <リポジトリ名>
+
+<!--
+  README 隔離方式の「リポ固有情報の置き場」テンプレート。
+  --add-dir でこのリポを <Share> 参照しても README.md はロードされないため、
+  利用先の文脈を汚さずにリポ固有の説明・セットアップ・MCP ポリシー・ローカルパスを置ける。
+  チーム共通指示は .claude/CLAUDE.md（--add-dir + env でロードされる共有資産）に置く。
+-->
+
+このリポジトリ自体の説明・使い方・セットアップ手順・MCP ポリシー・拡張オプションは
+この `README.md` に集約する（利用先にロードされない隔離先）。
+
+## セットアップ
+
+```bash
+# 依存インストール:
+# 環境変数: .env.example を .env にコピーして記入
+```
+
+## Claude Code 構成
+
+- **層1（このリポに commit）**: `.claude/CLAUDE.md`（共通ガバナンス）／`.claude/rules/`／
+  `.claude/settings.json`（permissions ＋ 層2 起動装置）
+- **層2（plugin で取得）**: skills / sub-agents / hooks / output-styles。
+  `.claude/settings.json` の `extraKnownMarketplaces` / `enabledPlugins` で自動取得される。
+
+## 拡張オプション（任意・デフォルト無効）
+
+- Sandbox モード: `.claude/settings.json` の `sandbox: true`。詳細 https://code.claude.com/docs/en/security
+- 層3（Managed settings）で強制したい場合: https://code.claude.com/docs/en/server-managed-settings

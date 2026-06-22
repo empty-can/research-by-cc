@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "base-dev-kit",
+  "description": "チーム共通の Claude Code 機能資産（skills / code-reviewer / output-style / SessionStart hook）を一元配布する plugin",
+  "version": "1.0.0",
+  "author": {
+    "name": "Your Team"
+  }
+}
