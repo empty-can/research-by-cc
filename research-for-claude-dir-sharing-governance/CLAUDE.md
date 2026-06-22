@@ -21,6 +21,7 @@
 | Marketplace 外資産の開発・テスト 調査結果（v1.0） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産の開発・テスト_調査結果.md` |
 | Marketplace 外資産 開発・テスト手順書（v1.0） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産_開発・テスト_手順書.md` |
 | 開発・テスト補助スクリプト（clean-test-env / check-payload・bash+PowerShell） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/scripts/` |
+| 実装テンプレート（層1+2・3チャネル構成の雛形） | `reports/03.実装テンプレート（層1+2）/`（README ＋ `layer1-repo-template/` ＋ `layer2-plugin/`） |
 
 ## 参照リソース
 
@@ -43,5 +44,5 @@
 - [x] 層2 成果物の Sonnet 動作検証（実機 `claude plugin validate` v2.1.185・2026-06-21）→ 指摘反映（7df3c0b）。副産物で v1.2 マトリクスの `--add-dir`×agents 誤記を発見・訂正（5063ded）。※後続の実機検証で**本訂正自体が v2.1.178 版依存**と判明し再訂正（225dda9・下記参照）
 - [x] Marketplace 外資産（CLAUDE.md/rules/settings 等）の開発・テスト調査 → 調査結果 v1.0 ＋ 手順書 v1.0（2026-06-21・タスク02 第2フェーズ `02.Marketplace外資産編`）
 - [x] 02.Marketplace外資産編 の Sonnet 動作検証（2026-06-22・実機）→ **重大検出: subagents×`--add-dir` は v2.1.178 版依存**（v2.1.165=非ロード／v2.1.178+=ロード）。現行✅＋版境界注記へ v1.2 errata 再訂正・出典 [75] 追加（225dda9）。対話実機で **#1 `/memory`＝`<Share>/.claude/CLAUDE.md` ロード確認（案1 生命線）／#2 `/agents`＝`--add-dir` 経由 subagent ロードを一意プローブで立証**。check-payload を案1（Git 追跡基準）へ改修も併施（75cc12d）。実 `<Share>`＝`base-dev-kit-for-cc` を grooming（PR #1）
+- [x] 実装スコープ決定（**層1+2＝テスト可能なコア**を採用・作業指示者選択）と 3 チャネル構成のテンプレート雛形作成 → `reports/03.実装テンプレート（層1+2）/`（2026-06-22）。base-dev-kit 資産を層1（ガバナンス＋起動装置）／層2（plugin: skills/agent/output-style/hook）へ振り分け。`claude plugin validate`（`--strict`）・marketplace validate ともにパス。**層3 は通常マシンで実機検証不可のため雛形は作らずレポート §解決案 層3系・付録A の記述に委譲**
 - [ ] （任意）公開 `README.md` 作成（CLAUDE.md からの派生・GitHub 閲覧者向け）
-- [ ] （任意）実装スコープ決定（層1のみ／層1+2／層1+2+3）と 3 チャネル構成のテンプレート雛形作成

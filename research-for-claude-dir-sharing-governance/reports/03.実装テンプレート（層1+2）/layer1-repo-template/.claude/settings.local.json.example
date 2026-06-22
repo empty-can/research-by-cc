@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "個人用ローカル設定の雛形。コピーして settings.local.json にリネームする。.gitignore 対象・共有不可。マシン固有の許可や個人の権限緩和をここに置く。",
+  "permissions": {
+    "allow": []
+  }
+}

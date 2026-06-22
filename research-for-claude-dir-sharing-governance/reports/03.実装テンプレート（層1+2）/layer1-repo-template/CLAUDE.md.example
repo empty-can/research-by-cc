@@ -1,0 +1,33 @@
+# <プロジェクト名>
+
+<!--
+  方法A（コピー展開）でこのファイルを CLAUDE.md にリネームし、リポジトリ固有の情報を記入する。
+  チーム共通のガバナンス（コーディング/Git/セキュリティ）は .claude/CLAUDE.md にあるため、
+  ここには「このリポジトリ固有」の前提・コマンド・MCP ポリシーだけを書く（二重管理を避ける）。
+-->
+
+## このリポジトリの概要
+
+- 目的:
+- 主要技術スタック:
+- エントリポイント / 主要ディレクトリ:
+
+## 開発コマンド
+
+```bash
+# ビルド:
+# テスト:
+# 起動:
+```
+
+## 層2 plugin の有効化（起動装置）
+
+このリポジトリは共有資産を **層2 plugin**（`base-dev-kit`）から取得する。
+有効化に必要な `extraKnownMarketplaces` / `enabledPlugins` は `.claude/settings.json` に
+commit 済み。初回 trust 時にインストールプロンプトが出る。fresh machine では
+`claude plugin install base-dev-kit@base-dev-kit` が必要な場合がある。
+
+## MCP ポリシー
+
+- 利用可否:
+- 各サーバーの用途・認証要件:
