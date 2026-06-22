@@ -184,6 +184,7 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 
 - **切り分け（二分探索）**: クリーンで問題が消えるなら原因は実 `~/.claude` か `<Other>` 側。ファイルを1つずつ戻して特定する。
 - **注意**: (1) **managed settings はクリーンセッションでも適用され続ける**（system パス）。(2) Linux/Windows は**再ログイン**が要る。(3) macOS は Keychain 継承。
+- **🔎 実機観測（item3 C7・2026-06-22）**: `claude -p "…" --debug-file <log>` でクリーン起動すると、debug ログの `Watching for changes in setting files …` に**空 `CLAUDE_CONFIG_DIR` の `settings.json` だけ**が出る（個人 `~/.claude`・project・local は消える）＝隔離成立を実証。`C:\Program Files\ClaudeCode\managed-settings.json` の探索行は残る（managed 残存）。空 config には auth が乗らず `Not logged in · Please run /login` となり、(2) の再ログインが必要なことも裏取りできた。**`--debug-file` の設定ロードログは `/status` を補完する非対話の権威ある証跡**（LLM 自己申告と違い実ロードの記録）として使える。⚠ debug ログには `localSettings` 等の個人ルールが平文で出るため、検証後は削除する。
 
 ---
 
@@ -221,9 +222,10 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 
 - [ ] 🧑 **trust 承認後**にテストしているか（clone/テンプレ展開直後は未承認でフル有効化されない。`autoMemoryDirectory`・`extraKnownMarketplaces` の install prompt は trust 後）
 - [ ] 🛠 **project/local では無視される security キー**を repo に書いていないか（効かない・スクリプトは WARN で検出）:
-  - `defaultMode: "auto"`（project/local で無視・v2.1.142+。効かせるなら `~/.claude/settings.json`）
+  - `defaultMode: "auto"`（project/local で無視・v2.1.142+。**付与できるのは policy(managed)/user(`~/.claude`)/flag(`--settings`)** スコープのみ）
   - `skipDangerousModePermissionPrompt`（project で無視）
   - `autoMode` / `useAutoModeDuringPlan`（shared project settings から読まれない）
+  - **🔎 実機観測（item3 C12・2026-06-22）**: project に `defaultMode:"auto"` を置き `--debug-file` 起動すると `[WARN] settings defaultMode "auto" ignored — only policy/user/flag settings may grant auto mode (projectSettings and localSettings are repo-controllable)` が出力され、無視を実機で確認。`--settings`（flag 層）でも付与可能な点は従来記載（「`~/.claude` のみ」）の精密化。
 - [ ] 🧑 `commands` / `output-styles` / `hooks` / `settings.json` の大半を **`--add-dir` で結合したつもりになっていないか**（読まれない。直接起動か物理配置で）
 - [ ] 🧑 `--add-dir` に渡すのは `.claude/` の**親**フォルダか（フォルダ名を `.claude` にしない）
 - [ ] 🛠 参照元（`<Share>` 等）に**個人の `CLAUDE.local.md` が残っていないか**（環境変数 ON 時に参照側へ漏れる）
@@ -248,6 +250,7 @@ managed settings で配る場合の確認（詳細は v1.2 案D・本タスク�
 
 ## 変更履歴
 
+- **v1.3（2026-06-22）**: item3 残検証 C7/C12 の実機観測を反映。§5 クリーン隔離に **`--debug-file` の設定ロードログによる隔離成立の実証**（watch=空 config のみ・managed 残存・auth 非継承で再ログイン要）と「`--debug-file` は `/status` を補完する非対話の権威ある証跡」注記を追加。§6.2 落とし穴に **`defaultMode:"auto"` 無視の実観測 WARN** と付与可能スコープ＝policy/user/flag（`--settings` でも付与可）の精密化を追加。
 - **v1.2（2026-06-22）**: subagents×`--add-dir` の CLI バージョン依存（**v2.1.178+ で対応・v2.1.165 までは不可**）を §2 結合表に反映（v1.2 報告書 errata と整合）。
 - **v1.1（2026-06-22）**: `check-payload`（`scripts/`・bash/PowerShell）を **Git 追跡基準**へ改修（追跡＝FAIL／未追跡で実在＝WARN／不在＝PASS・非 git の素ディレクトリのみ実在＝FAIL）し、共有共通ルールの所在期待を `.claude/CLAUDE.md`（案1）へ変更（ルート `CLAUDE.md` が追跡されている場合は `--add-dir`＋env 漏れを WARN）。§6.2 イントロに個人ファイル系 🛠 の追跡基準判定を明記。`base-dev-kit-for-cc` を実 `<Share>` として整備した実地検証（両版 FAIL=0）に基づく改修。
 - **v1.0（2026-06-21）**: 初版。[調査結果報告書 v1.0](./Marketplace外資産の開発・テスト_調査結果.md) を実務手順に落とし込み（ネイティブ起動・結合3経路・検証コマンド・クリーン隔離・落とし穴・層3 注記）。レビュー反映として §0 に推奨リポジトリ構成（`<Dev>`/`<Other>`/`<Share>`・案1 共有ペイロード＋README 隔離・共有境界の鉄則）、§3 に `--add-dir` の正確な memory ロード範囲、§6 に `CLAUDE.local.md` 漏れ・共有境界の落とし穴を追加。`settings.local.json` 非共有（共有は `settings.json`・マシン全リポの個人既定は `~/.claude/settings.json`）を §3・§6 に追記。本文の用語を §0 図の **`<Dev>`/`<Other>`/`<Share>`** に統一（「config リポ」「`<D>`」「`<W>`」を一掃）。クリーン隔離テスト環境作成スクリプトと落とし穴機械チェックスクリプト（bash/PowerShell 各2本）を `scripts/` に追加し §5・§6 から参照。レビュー反映: §2 を「ロード/発火スモーク」と位置づけ §3（方法B）を**正式機能検証の本命**に再フレーム、§3 の引用を【挙動・仕様】【注意】【禁止・非推奨】に再分類、§5 に `<Other>/.claude` 混入と同名衝突の非検知（`/memory` 等で目視）を追記しスクリプト実行例を手動と同格に併記・「バイセクト」→「二分探索」、§6 チェックリスト各項目に 🛠（スクリプト自動）/🧑（人手）を付与しスクリプト実行例を格上げ。§0 の全体像図を ASCII から **mermaid（GitHub ネイティブ描画）** に変更。§6 に「公開前の必須2コマンド」（`check-payload`＝衛生／`/security-review`＝脆弱性・read-only で空振り無害ゆえ常時実行）を新設し、mermaid に公開前ゲート（⑤）ノードを追加。
