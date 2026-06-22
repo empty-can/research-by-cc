@@ -75,6 +75,7 @@ GitHub MCP を使う場合は `GITHUB_TOKEN` 環境変数（OS レベルで設�
 
 | フォルダ | 概要 | CLAUDE.md |
 |---|---|---|
+| `research-for-claude-dir-sharing-governance/` | ポータブルな最小 `.claude/` を Marketplace のようにチーム共有・統制する仕組みの調査・設計（3 配布チャネルのマトリクス・実装テンプレート） | [CLAUDE.md](research-for-claude-dir-sharing-governance/CLAUDE.md) |
 | `research-for-local-RAG-for-cc/` | Claude Code から利用するローカル RAG（OSS／商用利用無料プロダクトのみで構築）の調査・設計・フィジビリティ検証・有効性検証 | [CLAUDE.md](research-for-local-RAG-for-cc/CLAUDE.md) |
 
 ## 動作環境
