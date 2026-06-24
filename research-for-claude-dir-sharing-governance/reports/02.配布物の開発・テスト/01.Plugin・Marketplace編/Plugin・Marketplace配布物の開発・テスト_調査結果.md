@@ -216,9 +216,49 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 
 ---
 
+<a id="cache-constraints"></a>
+
+## 7. plugin 配布時のパス解決・可変状態・同梱物アクセス（実装制約）
+
+> 本節は §3(2) のキャッシュコピー挙動を **skill 同梱の補助ファイル（references/・templates/・scripts/・README）** へ敷衍し、**「フォルダごと配布可」でも構成要素ごとに cache 先で使えない／書けない／ユーザに見えない制約がある**ことを原文照合で確定する。実 skill の plugin 化テストで顕在化した論点で、[手順書 §6](./Plugin開発・テスト_手順書.md) の根拠。出典はページ名＋セクション主体（行番号は現行 snapshot の参考値・[§出典](#sources) S16〜S20）。
+
+### (1) パス解決 — `${CLAUDE_SKILL_DIR}` / `${CLAUDE_PLUGIN_ROOT}`
+
+- 公式は **3 つのパス変数 `${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_SKILL_DIR}` / `${CLAUDE_PLUGIN_DATA}`** を提供し、**skill 本文・agent 本文・hook command・monitor command・MCP/LSP config のいずれでもインライン置換**され、さらに **hook プロセス・MCP/LSP サーバ subprocess には環境変数として export** される（`docs/plugins-reference`「path variables」）。
+- **skill 同梱ファイル（references/・templates/・scripts/）の参照は `${CLAUDE_SKILL_DIR}` が公式推奨**。SKILL.md のあるディレクトリ（plugin skill では plugin root でなく skill サブディレクトリ）に解決され、**personal / project / plugin のどこに置かれても正しく解決**される。SKILL.md 本文に `python3 ${CLAUDE_SKILL_DIR}/scripts/foo.py` と書けば実行前に絶対パスへ置換される（`docs/skills`「Available string substitutions」／codebase-visualizer 例）。
+- **スクリプト内部から env で読めるのは hook / MCP / LSP 起動プロセスに限る**（上記 export 対象）。**skill 手順で Claude が Bash ツール実行**するスクリプトは env 注入が保証されないため、SKILL.md 側の `${CLAUDE_SKILL_DIR}` 置換で絶対パスを引数に渡すか、スクリプトが自身位置（`__file__` 等）から相対解決する。※この env は **子プロセスの OS 環境変数**であり `settings.json` の `env` 要素ではない（`env` は OS 環境変数でも settings.json でも設定可・前者が唯一の採用元ではない）。
+- plugin root 外への `../` 参照は cache にコピーされず壊れる（`docs/plugins-reference`「Path traversal limitations」。§3(2) と整合）。
+
+### (2) 書き込み・可変状態 — cache は ephemeral、`${CLAUDE_PLUGIN_DATA}` を使う
+
+- **`${CLAUDE_PLUGIN_ROOT}` 配下（cache）に state を書いてはならない**。更新でパスが変わり、旧バージョン dir は約7日後に削除（orphaned 化し Glob/Grep 対象からも除外）。公式が "treat it as ephemeral … do not write state here" と明記（`docs/plugins-reference`「Plugin caching and file resolution」）。
+- 永続させる可変データ（ナレッジ蓄積・生成物・venv/node_modules・キャッシュ）は **`${CLAUDE_PLUGIN_DATA}`（`~/.claude/plugins/data/{id}/`・更新をまたいで残る・初回参照時に自動作成・最終スコープからの uninstall 時に削除〔`--keep-data` で保持〕）**かプロジェクト側に置く。
+- 含意: skill が「同梱 references/ に追記してナレッジ蓄積」する設計は cache では成立しない。**同梱 references/ は読み取り専用の初期データ**とし、可変分は分離する。
+
+### (3) 同梱ドキュメント（README・references）のユーザアクセス
+
+- plugin 同梱の `README.md`・references/ は cache にコピーされるが、**`/plugin`・`claude plugin` 系から本文を閲覧する公式 UI は無い**。`claude plugin details` はコンポーネント一覧とトークンコスト表示、Discover タブの詳細ペインも "commands and skills it provides" の一覧で、本文ではなく **homepage URL の参照を案内**する（`docs/discover-plugins`）。README は同梱を推奨されるが（`docs/plugins`）、**閲覧導線は plugin の `homepage`/`repository` フィールド（配布元リポジトリ）**が公式想定。
+- 含意: ユーザが読む README は配布元リポジトリ（`homepage`/`repository` で提示）に置く。skill が処理中に使う references/ は Claude がオンデマンドロードするのでユーザ手動アクセスは原則不要。**ユーザが読む／編集するファイルは plugin 同梱（読み取り専用 cache）に不向き**で、プロジェクト側（層1）か `${CLAUDE_PLUGIN_DATA}` へ寄せる。
+
+### (4) `skills/<name>/` 構成要素別の配布挙動
+
+plugin ディレクトリ全体が cache にコピーされるため、`skills/<name>/` 配下のサブフォルダ（references/・templates/・scripts/）や `README.md` はコピーされ実行時に参照可能。ただし構成要素で扱いが異なる:
+
+| 構成要素 | cache コピー | 制約 |
+|---|:---:|---|
+| `SKILL.md` | ○（ロード） | パスは `${CLAUDE_SKILL_DIR}` で記述 |
+| `references/`・`templates/` | ○ | 参照のみ（読み取り）。追記先に使わない（(2)） |
+| `scripts/*` | ○ | cwd 非依存で実装、書き込みは `${CLAUDE_PLUGIN_DATA}`／プロジェクト |
+| `README.md` | ○ | UI 閲覧不可。ユーザ向けは `homepage`/repo（(3)） |
+| plugin root `CLAUDE.md` | ○ | **コンテキスト自動ロードされない**（`docs/plugins-reference`）。指示は skill 化 |
+
+> **v1.2 マトリクスへの含意**: [§マトリクス](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md) ① の「`skills/` ✅ 層2」は**フォルダが配布される**ことを示すが、**中身が cache 先でそのまま機能する保証ではない**。本節の制約を v1.2 側にも脚注として反映済み。
+
+---
+
 <a id="implications"></a>
 
-## 7. v1.2（層2）との接続・含意
+## 8. v1.2（層2）との接続・含意
 
 - 本書のフロー（standalone で開発 → 固まったら plugin 化 → ローカル `--plugin-dir` でテスト → validate → Marketplace へ push）は、v1.2 が「層2 へ寄せる」と判断した**機能・拡張資産**の実装・配布ライフサイクルそのものに対応する。v1.2 案B〜B'''（marketplace 型／インライン宣言型／`@skills-dir` 型／seed 焼き込み型）の**どれを選ぶかに依らず、開発・テスト段階は共通してローカル `--plugin-dir` / ローカル marketplace で回す**。
 - **最大の制約 = 配布単位はプラグインディレクトリ単位**で、`CLAUDE.md` / `rules/` / `settings.json` 等のリポジトリ統制設定は plugin 配布外、という点は v1.2 マトリクス②の裏付けであり、Marketplace 開発スコープでは前提。これら「Marketplace で配れない資産」の開発・テストは、本タスクの**後続フェーズ（`02.Marketplace外資産編` 想定）**で扱う。
@@ -249,6 +289,11 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 | S13 | `claude plugin validate`（提出前必須・検査内容・レビューパイプライン） | `docs/plugins` / `docs/plugin-marketplaces` | 27914・27423・27425 |
 | S14 | `claude --debug` / `/plugin` Errors タブ | `docs/plugins-reference` | 63864・63017 付近 |
 | S15 | `plugin-dev` の docs カタログ掲載（"Development workflows"）＋名前空間例 | `docs/discover-plugins`（13524 付近）／`docs/plugins-reference`（13210 付近） | — |
+| S16 | パス変数3種（`CLAUDE_PLUGIN_ROOT`/`CLAUDE_SKILL_DIR`/`CLAUDE_PLUGIN_DATA`）は skill/agent 本文・hook/monitor command・MCP/LSP config でインライン置換＋hook/MCP/LSP subprocess へ env export | `docs/plugins-reference`（path variables） | 63695 付近 |
+| S17 | `${CLAUDE_SKILL_DIR}` で skill 同梱スクリプト/ファイルを参照（personal/project/plugin で解決） | `docs/skills`（Available string substitutions / codebase-visualizer 例） | 32800・33163・33181 付近 |
+| S18 | cache は ephemeral・"do not write state here"・旧版は約7日後に削除・Glob/Grep 除外／`../` 外部参照不可 | `docs/plugins-reference`（Plugin caching and file resolution / Path traversal limitations） | 63695-63697・63776・63778・63784 付近 |
+| S19 | `${CLAUDE_PLUGIN_DATA}` = `~/.claude/plugins/data/{id}/`・更新をまたいで永続・初回参照で自動作成・最終スコープ uninstall で削除（`--keep-data` で保持） | `docs/plugins-reference`（persistent data directory） | 63701・63724 付近 |
+| S20 | README 同梱は推奨だが UI 閲覧導線なし→`homepage`/Discover で案内／`claude plugin details` はコンポーネント一覧表示／plugin root の `CLAUDE.md` は非ロード | `docs/plugins`・`docs/discover-plugins`・`docs/plugins-reference` | 27807・13706・64098・63855 付近 |
 
 > **`plugin-dev` の機能詳細の出所**: 上記 S15 は docs 側の「言及」のみ。7 skill・`/plugin-dev:create-plugin` の 8 フェーズ・3 agent・6 検証スクリプトといった機能詳細は docs に無く、根拠は plugin 同梱の `README.md` および `commands/create-plugin.md` / `agents/*.md` / `.claude-plugin/plugin.json`（`anthropics/claude-plugins-official` の `plugins/plugin-dev/`、GitHub MCP で取得・精読）。
 
@@ -256,4 +301,5 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 
 ## 変更履歴
 
+- **v1.1（2026-06-25）**: §7「plugin 配布時のパス解決・可変状態・同梱物アクセス（実装制約）」を新設（実 skill の plugin 化テストで顕在化）。`${CLAUDE_SKILL_DIR}`／`${CLAUDE_PLUGIN_ROOT}` の置換範囲と env export、cache の ephemeral 性（書込禁止・約7日 orphan）と `${CLAUDE_PLUGIN_DATA}` への可変状態退避、README/references のユーザアクセス制約（UI 非閲覧→`homepage`）、`skills/<name>/` 構成要素別挙動を原文照合で確定。§出典に S16〜S20 を追加。[手順書 v1.1 §6](./Plugin開発・テスト_手順書.md) の根拠。旧§7「v1.2との接続・含意」は §8 へ繰り下げ。原文照合は `cc-docs-plugins-marketplace-expert` agent。
 - **v1.0（2026-06-21）**: 初版。公式 docs（plugins / plugin-marketplaces / plugins-reference / skills）の原文照合に基づき、層2 配布物の開発・テストフロー・手段・制約・検証を整理。レビュー指摘反映として `--debug` の実行時カバー範囲、`validate` の必須/推奨条件、`skill-creator` の機能詳細・公開 URL を補強。純正 `plugin-dev` を README＋`create-plugin.md`／agent 定義／manifest の精読で裏取りし [§6](#plugin-dev) を追加（8 フェーズ詳細・3 agent・6 スクリプト・`commands/` レガシー指針・docs カタログ掲載の確認を含む）。**Sonnet 動作検証（実機 `claude plugin validate` v2.1.185）の反映**: `plugin.json` の `author` ＝オブジェクト型・`marketplace.json` の `owner` ＝必須、`--add-dir` は skills だけでなく **subagents（`.claude/agents/`）も自動ロード**（§4 訂正）、`--debug` 出力先 `~/.claude/debug/<session-id>.txt`、`validate --strict`。

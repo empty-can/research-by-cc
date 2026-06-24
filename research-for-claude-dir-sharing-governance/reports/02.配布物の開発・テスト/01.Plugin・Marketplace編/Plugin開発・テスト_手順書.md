@@ -79,7 +79,12 @@ my-tool/                     # 手元の開発リポジトリ（=作業ディレ
 my-plugin/
 ├── .claude-plugin/
 │   └── plugin.json          # name / version / description / author などのメタdata
-├── skills/hello/SKILL.md    # ユーザー起動コマンドも新規はここ（skills/）に作る
+├── skills/my-skill/
+│   ├── SKILL.md             # ユーザー起動コマンドも新規はここ（skills/）に作る
+│   ├── README.md            # 利用者向け説明（※cache 内は UI から閲覧不可 → §6.3）
+│   ├── references/          # skill が処理中に参照するナレッジ（読み取り専用前提 → §6.2）
+│   ├── templates/           # skill が生成する成果物のひな型
+│   └── scripts/*.py         # skill が呼ぶスクリプト（パスは ${CLAUDE_SKILL_DIR} 解決 → §6.1）
 ├── agents/bar.md
 └── hooks/hooks.json         # 必要なら（スクリプト本体は ${CLAUDE_PLUGIN_ROOT} 参照で同梱）
 ```
@@ -98,6 +103,8 @@ my-plugin/
 > ⚠️ **plugin ディレクトリの外を参照しない**こと。install 時に plugin ディレクトリだけがキャッシュへコピーされるため、`../shared/...` のような外部参照は配布後に壊れる。共有したいファイルは plugin 内に収める。
 >
 > 📌 **`commands/` はレガシー形式**: 公式の `plugin-dev` は「新規のユーザー起動スラッシュコマンドは `commands/*.md` ではなく `skills/<name>/SKILL.md` で作る」ことを推奨する（両者はロード挙動が同一で、差はファイルレイアウトのみ。`commands/` は既存 plugin 保守時の許容レガシー）。新規 plugin では `skills/` に寄せる。
+
+> 🧩 **配布前提のスクリプト・同梱ファイル（references/ templates/ scripts/ README）には実装規約がある**: plugin 化すると実行場所が `<repo>\.claude` でなく cache（`~/.claude/plugins/cache/…`）になり、パス解決・書き込み先・README 提示に制約がつく（cwd 依存の相対パスは壊れる）。**新規に skill＋スクリプトを作る前に §6 を必読**。
 
 skill 単体を scaffold したい場合は次が速い:
 
@@ -350,9 +357,56 @@ cc --plugin-dir /path/to/plugin-dev
 - [ ] 配布形態（ローカル marketplace install → uninstall → reinstall）で挙動を確認した
 - [ ] `source` の種別（git / URL）と相対パス参照の整合を確認した
 - [ ] `--debug` でロードエラーが出ていない
+- [ ] スクリプト/SKILL.md のパス参照が `${CLAUDE_SKILL_DIR}` / `${CLAUDE_PLUGIN_ROOT}` 解決（cwd 依存・絶対パス・`../` 不使用）（§6.1）
+- [ ] 書き込み・蓄積先が `${CLAUDE_PLUGIN_DATA}` かプロジェクト側（cache=`${CLAUDE_PLUGIN_ROOT}` 配下に書いていない）（§6.2）
+- [ ] ユーザが読む README は `homepage`/repo で参照可能（cache 内 README に依存しない）（§6.3）
+- [ ] plugin root の `CLAUDE.md` に依存していない（自動ロードされない）（§6.4）
+
+---
+
+## 6. plugin 配布前提のスクリプト・同梱ファイル実装規約（重要）
+
+> **なぜ重要か**: skills/ のように「フォルダごと配布可」とされる資産でも、**plugin 化して Marketplace 配布すると実行場所が `<repo>\.claude` ではなく cache（`~/.claude/plugins/cache/<mp>/<plugin>/<version>/`）になる**。`*.md` のようにパスがファイル固定の資産と違い、フォルダ配布資産は**構成要素ごとに「配布されても cache 先で使えない／書けない／ユーザに見えない」制約**を持つ。standalone（層1 直置き）では cwd＝`<repo>` 前提の相対パスが偶然動くが、plugin 化で必ず壊れる。配布前提のスクリプト・同梱ファイルは最初からこの規約で作る。（出典: 公式 plugins-reference / skills。根拠詳細は調査結果報告書へ別途追補）
+
+### 6.1 パス解決（読み取り）— cwd 非依存で書く
+
+- **skill 同梱ファイル（references/・templates/・scripts/）の参照は `${CLAUDE_SKILL_DIR}` を使う**。SKILL.md のあるディレクトリ（plugin の場合は plugin root でなく skill サブディレクトリ）に解決され、**personal / project / plugin のどこに置かれても正しく解決される**公式推奨変数。SKILL.md 本文に `python3 ${CLAUDE_SKILL_DIR}/scripts/foo.py` と書けば**実行前に絶対パスへインライン置換**される。
+- **plugin root 相対（複数 skill 横断・hook・MCP/LSP）の参照は `${CLAUDE_PLUGIN_ROOT}`**。`${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_SKILL_DIR}` / `${CLAUDE_PLUGIN_DATA}` は **skill 本文・agent 本文・hook command・monitor command・MCP/LSP config のいずれでもインライン置換**される。
+- **スクリプト内部から env 変数で読めるか**は起動経路で異なる（**ここでの env は「起動された子プロセスの OS 環境変数」であり、settings.json の `env` 要素ではない**。これらの変数は Claude Code が実行時に注入する）:
+  - **hook / MCP / LSP から起動**されたプロセス → `CLAUDE_PLUGIN_ROOT` 等が環境変数として export され `os.environ` / `process.env` で読める。
+  - **skill の手順で Claude が Bash ツール実行**するスクリプト → env 注入は保証されない。**SKILL.md 側で `${CLAUDE_SKILL_DIR}` を置換させ引数で絶対パスを渡す**か、スクリプトが**自身位置から相対解決**（Python `Path(__file__).resolve().parent`／bash `cd "$(dirname "${BASH_SOURCE[0]}")" && pwd`）する。
+- **禁止**: cwd 依存の相対パス（`./scripts/...`）／ハードコード絶対パス／plugin root 外への `../` 参照（cache にコピーされず壊れる）。
+
+### 6.2 書き込み・蓄積先 — cache に書かない
+
+- **`${CLAUDE_PLUGIN_ROOT}` 配下（cache）へ state を書いてはならない**。更新のたびにパスが変わり、旧バージョン dir は**約7日後に削除**（orphaned 化し Glob/Grep 対象からも除外）。公式も "treat it as ephemeral … do not write state here" と明記。
+- **永続させる書き込み（ナレッジ蓄積・生成物・venv/node_modules・キャッシュ）は `${CLAUDE_PLUGIN_DATA}`**（`~/.claude/plugins/data/{id}/`・**更新をまたいで残る**・初回参照時に自動作成・最終スコープからの uninstall 時に削除〔`--keep-data` で保持〕）かプロジェクト側に置く。
+- 「references/ のファイルに追記してナレッジ蓄積」は cache 配下では不可。**同梱 references/ は読み取り専用の初期データ**として扱い、可変分は `${CLAUDE_PLUGIN_DATA}`／プロジェクトへ分離する。
+
+### 6.3 README・references のユーザアクセス — cache 内ファイルに依存しない
+
+- plugin 同梱の `README.md`・references/ は cache にコピーされるが、**`/plugin`・`claude plugin` 系から内容を閲覧する公式 UI は無い**（`claude plugin details`／Discover タブはコンポーネント一覧とトークンコスト表示で、本文表示ではない）。普段開かない cache パスを辿らせる運用は非現実的。
+- **対応案**:
+  1. **ユーザが読む README は配布元リポジトリに置き、`plugin.json` / `marketplace.json` の `homepage` / `repository` で URL を提示**する（公式想定経路・GitHub 上で閲覧）。← 推奨
+  2. **skill が処理中に参照する references/ は、ユーザの手動アクセス前提にしない**。SKILL.md から参照され Claude がオンデマンドにロードする。
+  3. **ユーザが読む／編集するファイル**は plugin 同梱（読み取り専用 cache）に不向き。プロジェクト側（層1）か `${CLAUDE_PLUGIN_DATA}` に置く設計へ寄せる。
+
+### 6.4 フォルダ配布資産（skills/<name>/）の構成要素別チェック
+
+| 構成要素 | cache へコピー | plugin 配布時の制約・実装規約 |
+|---|:---:|---|
+| `SKILL.md` | ○（ロード） | 本文のパスは `${CLAUDE_SKILL_DIR}` で書く（§6.1） |
+| `references/`（読み取り） | ○ | 参照は `${CLAUDE_SKILL_DIR}` 経由。**追記先に使わない**（§6.2） |
+| `templates/` | ○ | 読み取りは同上。生成物の出力先は cache でなくプロジェクト／PLUGIN_DATA |
+| `scripts/*.py` 等 | ○ | cwd 非依存で実装（§6.1）、書き込みは §6.2 |
+| `README.md` | ○ | **UI 閲覧不可**。ユーザ向けは `homepage`/repo で提示（§6.3） |
+| plugin root `CLAUDE.md` | ○ | **コンテキストに自動ロードされない**。指示を載せるなら skill 化 |
+
+> **要点**: 「skills/ は層2 配布可（v1.2 マトリクス §核心 ①）」は**フォルダが配布される**ことを意味するが、**中身が cache 先でそのまま機能する保証ではない**。配布前提の skill は本 §6 の規約で実装する。
 
 ---
 
 ## 変更履歴
 
+- **v1.1（2026-06-25）**: §6「plugin 配布前提のスクリプト・同梱ファイル実装規約」を新設（実 skill の plugin 化テストで判明したパス解決・書き込み先・README アクセスの制約を反映）。パス解決は `${CLAUDE_SKILL_DIR}`／`${CLAUDE_PLUGIN_ROOT}` のインライン置換と起動経路別の env 注入、書き込みは cache 禁止・`${CLAUDE_PLUGIN_DATA}` 利用、README は UI 非閲覧で `homepage` 提示を明記。§②のディレクトリ例を references/templates/scripts/README 付きの実構成へ拡張し §6 への必読ポインタを追加、§5 チェックリストに 4 項目追加。（出典の行番号付き根拠は調査結果報告書へ別途追補予定）
 - **v1.0（2026-06-21）**: 初版。[調査結果報告書 v1.0](./Plugin・Marketplace配布物の開発・テスト_調査結果.md) を実務手順に落とし込み。レビュー反映として全体フロー図のローカルリポ明示（A/B/C）、standalone の語義・①の動作検証・②の実施リポ・④ validate の必須/推奨条件・`--debug` の実行時範囲・scaffold の語義・`skill-creator` の機能/URL を補強。`commands/` レガシー指針（§1②）を追記し、純正 `plugin-dev` の節（§4）を `create-plugin` 8 フェーズ表・7 skill・3 agent・6 検証スクリプトまで踏まえて拡充。**Sonnet 動作検証（実機 `claude plugin validate` v2.1.185）反映**: `plugin.json` の `author`＝オブジェクト・`marketplace.json` の `owner`＝必須の最小例追加、`--add-dir` 注記を skills＋subagents に訂正、`--debug` 出力先 `~/.claude/debug/<session-id>.txt` 明記、`validate --strict` 追加。
