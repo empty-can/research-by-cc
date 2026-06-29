@@ -6,7 +6,7 @@
 > **このファイルに書かないもの**: リポジトリ固有の使い方・MCP ポリシー・拡張オプション・
 > ローカル絶対パス。それらは `README.md`（`--add-dir` では非ロード）に置く（README 隔離方式）。
 
-> **層1+2 構成での位置づけ**: 機能資産（skills / sub-agents / hooks / output-styles）は
+> **層1+2 構成での位置づけ**: 機能資産（skills / subagents / hooks / output-styles）は
 > **層2 plugin** から配る（→ リポジトリルート `README.md` と `reports/03` README 参照）。
 > 本ファイル（層1）は plugin で運べない**常時ガバナンス**（コーディング規約・Git・セキュリティ）に絞る。
 > plugin が提供するコマンドは `/base-dev-kit:<command>` の名前空間で呼ぶ。

@@ -59,7 +59,7 @@
 |---|---|---|
 | `skills/`（`.claude/skills/`） | **`--add-dir <Share>`** | 自動ロード・**live reload**あり |
 | `agents/`（subagents） | **`--add-dir <Share>`** | 自動ロード（**v2.1.178+ で対応・v2.1.165 までは非ロード**。v1.2 報告書 errata 参照） |
-| `settings.json` の `enabledPlugins` / `extraKnownMarketplaces` | **`--add-dir <Share>`** | **この2キーのみ**読まれる |
+| `settings.json` / `settings.local.json` の `enabledPlugins` / `extraKnownMarketplaces` | **`--add-dir <Share>`** | **この2キーのみ**読まれる |
 | `CLAUDE.md` / `.claude/rules/` / `CLAUDE.local.md` | **`--add-dir <Share>` ＋ `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`** | 環境変数が `1` の時のみ。`CLAUDE.local.md` は `local` setting source（既定有効）も条件 |
 | `settings.json`（permissions / hooks / env 等のその他キー） | **`--settings <Share>/.claude/settings.json`** | `--add-dir` では読まれない。command-line precedence でマージ（[§優先順位](#precedence)） |
 | `commands/` / `output-styles/` / `hooks`（settings 内） | **結合不可** | `--add-dir` 先からはロードされない。物理配置か `<Share>` で直接起動する |
@@ -93,7 +93,7 @@
 
 スコープ優先（高い順）: **managed > command-line（`--settings`） > local（`settings.local.json`） > project（`settings.json`） > user（`~/.claude/settings.json`）**（`docs/settings`）。`--settings` で渡した値は他レイヤと**同じマージ規則**で結合し、同一キーを上書き、未指定キーは下位レイヤの値を残す。permission ルールの衝突は **deny → ask → allow** の順で評価され、**どのスコープであれ deny が最優先**（`docs/permissions`）。
 
-> **`settings.local.json` は共有不可・`--settings` の対象は `settings.json`**: `settings.local.json` は **project 個人・gitignore 専用**（`docs/settings` で "Project only / personal overrides out of git"）で、`--add-dir` でも読まれない（[§2 表](#combine)）。他リポへ名指し `--settings` で食わせるのは本来の用途に反する。`settings` の正しい使い分け: **共有＝`settings.json`（`--settings <Share>/.claude/settings.json`）／マシン全リポの個人既定＝`~/.claude/settings.json`（user スコープ。`~/.claude/settings.local.json` は存在しない）／特定リポの個人 override＝`<project>/.claude/settings.local.json`**。
+> **`settings.local.json` は共有不可・`--settings` の対象は `settings.json`**: `settings.local.json` は **project 個人・gitignore 専用**（`docs/settings` で "Project only / personal overrides out of git"）で、`--add-dir` では原則読まれない（**例外: `enabledPlugins`/`extraKnownMarketplaces` の2キーのみ `settings.json` 同様にロードされる**・[§2 表](#combine)）。他リポへ名指し `--settings` で食わせるのは本来の用途に反する。`settings` の正しい使い分け: **共有＝`settings.json`（`--settings <Share>/.claude/settings.json`）／マシン全リポの個人既定＝`~/.claude/settings.json`（user スコープ。`~/.claude/settings.local.json` は存在しない）／特定リポの個人 override＝`<project>/.claude/settings.local.json`**。
 
 ---
 
@@ -164,7 +164,7 @@ config 資産をテストする際、**「リポに commit したのに効かな
   （出典: `docs/settings` / `docs/permission-modes`）
 - **`--add-dir` の非カバー**: `commands`/`output-styles`/`hooks`/`settings.json` の大半は `--add-dir` 先から読まれない（[§2](#combine)）。これらを「`--add-dir` で結合したのに動かない」と誤解しないこと。テストは `<Share>` で直接起動するか物理配置で。
 - **`permissions.additionalDirectories` 経由は自動ロードしない**: 同じ追加ディレクトリでも、`--add-dir` フラグ／`/add-dir` コマンドなら skills 等を読むが、`additionalDirectories` 設定値経由ではファイルアクセス付与のみ。
-- **`settings.local.json` を共有資産にしない**: project 個人・gitignore 専用で `--add-dir` でも読まれない。配布 clone（`<Share>`）に置かない（`CLAUDE.local.md` と同じアンチパターン）。共有したい設定は `settings.json` へ。
+- **`settings.local.json` を共有資産にしない**: project 個人・gitignore 専用（`--add-dir` で読まれるのは `enabledPlugins`/`extraKnownMarketplaces` の2キーのみで、それ以外は読まれない）。配布 clone（`<Share>`）に置かない（`CLAUDE.local.md` と同じアンチパターン）。共有したい設定は `settings.json` へ。
   - **配布されるのは Git 追跡分のみ**: `<Share>` が git リポジトリなら、漏洩可否を分けるのは「ローカルに実在するか」ではなく「**Git 追跡されているか**」。gitignore 済みで未追跡の個人ファイル（`settings.local.json`/`CLAUDE.local.md`）は、作業ツリーに実在しても clone には乗らない＝参照側へ漏れない（ただし掃除は推奨）。逆に**誤って追跡してしまった個人ファイルは漏れる**ため `git rm --cached` ＋ `.gitignore` で外す。`check-payload`（`scripts/`・手順書 §6）はこの**追跡基準**で判定する（追跡＝FAIL／未追跡で実在＝WARN／不在＝PASS。非 git の素ディレクトリのみ実在＝FAIL）。
 - **同名衝突は警告なく解決される**: 方法B では `<Other>` 自身の `.claude` も同時にロードされ、`<Share>` の資産と混ざる。同一スコープに同名の subagent/skill があると Claude Code は**警告・プロンプトなしで片方を残し他方を破棄**する（`docs/sub-agents`）。混入はエラー検知に頼れないので、`/memory`・`/skills`・`/agents`・`/context` で**何がどのパスから読まれたかを目視**する。`<Share>` 単独で検証したいなら `.claude` の無い空作業 dir から `--add-dir`（クリーン隔離 [§4](#clean)）。
 
@@ -253,6 +253,7 @@ config 資産をテストする際、**「リポに commit したのに効かな
 
 ## 変更履歴
 
+- **v1.4（2026-06-29）**: 横断整合性レビュー反映。`settings.local.json` も `enabledPlugins`/`extraKnownMarketplaces` の2キーに限り `settings.json` 同様 `--add-dir` で読まれる事実（docs「Additional directories」表・v2.1.195）に合わせ、§2 結合表・§優先順位注記・§6 落とし穴の「`settings.local.json` は `--add-dir` でも読まれない」を**2キー例外あり**に精密化（対の手順書 v1.4 と一致）。共有用途に使わない実務指針は不変。
 - **v1.3（2026-06-22）**: item3 残検証 **C7 / C10 / C12 を実機確認**（`claude -p … --debug-file` の設定ロードログ＝LLM 自己申告でない権威ある証跡で実証）。(C7) クリーン起動（`CLAUDE_CONFIG_DIR`=空 dir ＋ `.claude` 無し作業 dir）で watch 対象は空 config の `settings.json` のみ＝個人/project/local を排除・managed パスは継続探索・auth 非継承（`Not logged in`）を確認。(C10) `--settings` 由来が destination **`flagSettings`（command-line 層）**として `userSettings`/`projectSettings`/`localSettings` と別 destination で併存することを確認。(C12) project の `defaultMode:"auto"` に対し `[WARN] settings defaultMode "auto" ignored — only policy/user/flag settings may grant auto mode` を実観測＝無視を実証し、**付与可能スコープが policy/user/flag**（managed・`~/.claude`・`--settings`）であると判明（従来「効かせるなら `~/.claude`」を精密化）。検証用 fixture と個人ルールを含む debug ログは検証後に削除。
 - **v1.2（2026-06-22）**: subagents×`--add-dir` の **CLI バージョン依存**を反映。§2 結合表・C9 を「**v2.1.178+ で `<Share>/.claude/agents/` をスキャン・ロード／v2.1.165 までは非ロード**」と版境界付きに訂正（v1.2 報告書 errata [75] と整合）。実機検証（item 3）で `cc-docs-config-scopes-expert` の原文照合および新旧スナップショット比較により、当初 errata の「subagents は `--add-dir` で常時ロード」が版依存だったと判明。
 - **v1.1（2026-06-22）**: `base-dev-kit-for-cc` を実 `<Share>` として整備した際の知見を反映。§6 落とし穴に **「配布されるのは Git 追跡分のみ」** を追記——gitignore 済みで未追跡の個人ファイル（`settings.local.json`/`CLAUDE.local.md`）は作業ツリーに実在しても clone には乗らず参照側へ漏れない（誤って追跡したものは漏れるため `git rm --cached`＋`.gitignore`）。対の手順書の `check-payload`（`scripts/`）を**追跡基準**へ改修（追跡＝FAIL／未追跡で実在＝WARN／不在＝PASS・非 git の素ディレクトリのみ実在＝FAIL）し、共有共通ルールの所在期待を `.claude/CLAUDE.md` へ変更（ルート `CLAUDE.md` が追跡されている場合は `--add-dir`＋env 漏れを WARN）。bash/PowerShell 両版で FAIL=0 を実走確認。

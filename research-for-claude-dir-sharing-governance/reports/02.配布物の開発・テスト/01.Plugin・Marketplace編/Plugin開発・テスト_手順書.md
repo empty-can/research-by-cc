@@ -226,7 +226,7 @@ claude --debug hooks      # hook の評価をツール実行ごとにライブ�
 | `--debug` | **汎用デバッグログ（`~/.claude/debug/<session-id>.txt` にセッション単位で出力）**。plugin の場合はロード詳細・manifest エラーを見られるが、**ロード時専用ではない**——`--debug hooks`（hook 評価をツール実行ごとにライブ記録）・`--debug mcp`（MCP サーバの stderr）のように**ロード後の実行時イベントも対象**。サブチャネル（`hooks`/`mcp`）で対象を絞れる（旧 `--mcp-debug` は非推奨・`--debug mcp` を使う） |
 
 > `--add-dir` で渡すのは「`.claude/` を内包する親フォルダ」。フォルダ名自体を `.claude` にすると `<dir>/.claude/.claude/` を探して読まれないので注意。
-> **`--add-dir`（フラグ／`/add-dir`）で `<dir>/.claude/` から自動ロードされる設定**（公式 `docs/permissions` の表）: **skills（`.claude/skills/`・live reload）と subagents（`.claude/agents/`）**、および `settings.json` のうち **`enabledPlugins` / `extraKnownMarketplaces` のみ**。`CLAUDE.md` / `rules` / `CLAUDE.local.md` は環境変数 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を付けた時だけ読まれる。`settings.json` のそれ以外のキー（permissions/hooks 等）・commands・output-styles は読まれない。
+> **`--add-dir`（フラグ／`/add-dir`）で `<dir>/.claude/` から自動ロードされる設定**（公式 `docs/permissions` の表）: **skills（`.claude/skills/`・live reload）と subagents（`.claude/agents/`・v2.1.178+。v2.1.165 までは非ロード）**、および `settings.json` のうち **`enabledPlugins` / `extraKnownMarketplaces` のみ**。`CLAUDE.md` / `rules` / `CLAUDE.local.md` は環境変数 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を付けた時だけ読まれる。`settings.json` のそれ以外のキー（permissions/hooks 等）・commands・output-styles は読まれない。
 > ⚠️ `permissions.additionalDirectories` 設定経由ではこれら例外は**一切**読まれず、ファイルアクセス付与のみ（自動ロードは `--add-dir` フラグ／`/add-dir` 限定）。
 
 ### セッション内 / CLI コマンド対応
@@ -408,5 +408,6 @@ cc --plugin-dir /path/to/plugin-dev
 
 ## 変更履歴
 
+- **v1.2（2026-06-29）**: 横断整合性レビュー反映。§2 の `--add-dir` 自動ロード注記の subagents（`.claude/agents/`）に版境界「v2.1.178+。v2.1.165 までは非ロード」を補い、v1.2 報告書 errata [75]・他編と統一。
 - **v1.1（2026-06-25）**: §6「plugin 配布前提のスクリプト・同梱ファイル実装規約」を新設（実 skill の plugin 化テストで判明したパス解決・書き込み先・README アクセスの制約を反映）。パス解決は `${CLAUDE_SKILL_DIR}`／`${CLAUDE_PLUGIN_ROOT}` のインライン置換と起動経路別の env 注入、書き込みは cache 禁止・`${CLAUDE_PLUGIN_DATA}` 利用、README は UI 非閲覧で `homepage` 提示を明記。§②のディレクトリ例を references/templates/scripts/README 付きの実構成へ拡張し §6 への必読ポインタを追加、§5 チェックリストに 4 項目追加。（出典の行番号付き根拠は調査結果報告書へ別途追補予定）
 - **v1.0（2026-06-21）**: 初版。[調査結果報告書 v1.0](./Plugin・Marketplace配布物の開発・テスト_調査結果.md) を実務手順に落とし込み。レビュー反映として全体フロー図のローカルリポ明示（A/B/C）、standalone の語義・①の動作検証・②の実施リポ・④ validate の必須/推奨条件・`--debug` の実行時範囲・scaffold の語義・`skill-creator` の機能/URL を補強。`commands/` レガシー指針（§1②）を追記し、純正 `plugin-dev` の節（§4）を `create-plugin` 8 フェーズ表・7 skill・3 agent・6 検証スクリプトまで踏まえて拡充。**Sonnet 動作検証（実機 `claude plugin validate` v2.1.185）反映**: `plugin.json` の `author`＝オブジェクト・`marketplace.json` の `owner`＝必須の最小例追加、`--add-dir` 注記を skills＋subagents に訂正、`--debug` 出力先 `~/.claude/debug/<session-id>.txt` 明記、`validate --strict` 追加。

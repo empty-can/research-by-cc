@@ -21,10 +21,10 @@
 
 - **層1（このリポに commit）**: `.claude/CLAUDE.md`（共通ガバナンス）／`.claude/rules/`／
   `.claude/settings.json`（permissions ＋ 層2 起動装置）
-- **層2（plugin で取得）**: skills / sub-agents / hooks / output-styles。
+- **層2（plugin で取得）**: skills / subagents / hooks / output-styles。
   `.claude/settings.json` の `extraKnownMarketplaces` / `enabledPlugins` で自動取得される。
 
 ## 拡張オプション（任意・デフォルト無効）
 
-- Sandbox モード: `.claude/settings.json` の `sandbox: true`。詳細 https://code.claude.com/docs/en/security
+- Sandbox モード: `.claude/settings.json` の `"sandbox": { "enabled": true }`。詳細 https://code.claude.com/docs/en/security
 - 層3（Managed settings）で強制したい場合: https://code.claude.com/docs/en/server-managed-settings

@@ -3,7 +3,9 @@
 <!--
   方法A（コピー展開）でこのファイルを CLAUDE.md にリネームし、リポジトリ固有の情報を記入する。
   チーム共通のガバナンス（コーディング/Git/セキュリティ）は .claude/CLAUDE.md にあるため、
-  ここには「このリポジトリ固有」の前提・コマンド・MCP ポリシーだけを書く（二重管理を避ける）。
+  ここには「このリポジトリ固有」の前提・コマンドだけを書く（二重管理を避ける）。
+  MCP ポリシー・拡張オプション等は `README.md` に隔離する（`.claude/CLAUDE.md` の README 隔離方針に従う。
+  root `CLAUDE.md` は --add-dir+env で共有されうるため、リポ固有情報は README へ寄せる）。
 -->
 
 ## このリポジトリの概要
@@ -25,9 +27,6 @@
 このリポジトリは共有資産を **層2 plugin**（`base-dev-kit`）から取得する。
 有効化に必要な `extraKnownMarketplaces` / `enabledPlugins` は `.claude/settings.json` に
 commit 済み。初回 trust 時にインストールプロンプトが出る。fresh machine では
-`claude plugin install base-dev-kit@base-dev-kit` が必要な場合がある。
+`claude plugin install base-dev-kit@base-dev-kit-marketplace` が必要な場合がある。
 
-## MCP ポリシー
-
-- 利用可否:
-- 各サーバーの用途・認証要件:
+> MCP ポリシー（利用可否・各サーバーの用途/認証要件）は `README.md` に記載する（README 隔離方式）。
