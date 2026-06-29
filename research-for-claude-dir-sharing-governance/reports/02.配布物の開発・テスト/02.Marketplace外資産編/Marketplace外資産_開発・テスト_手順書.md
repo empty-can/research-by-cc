@@ -118,6 +118,8 @@ claude --settings <Share>/.claude/settings.json
 | `settings.json`（permissions / hooks / env 等） | `--settings <Share>/.claude/settings.json` |
 | `commands/` / `output-styles/` / `hooks` | **結合不可** → `<Share>` で直接起動（方法A）か物理配置 |
 
+> **正本**: 版依存の事実（subagents の版境界・`settings.local.json` を含む2キー例外）は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) を正とする（本表は運用早見）。
+
 > **【挙動・仕様】**
 > - 環境変数 ON 時に `--add-dir <Share>` がロードする memory ファイルは `<Share>/CLAUDE.md`・`<Share>/.claude/CLAUDE.md`・`<Share>/.claude/rules/*.md`・`<Share>/CLAUDE.local.md`（**all-or-nothing**。ルート/`.claude/` での個別制御は不可）。
 > - `--settings` はスコープ優先で **managed > `--settings` > local > project > user**。値はマージ、permission は deny 最優先。
@@ -250,6 +252,7 @@ managed settings で配る場合の確認（詳細は v1.2 案D・本タスク�
 
 ## 変更履歴
 
+- **v1.5（2026-06-29）**: 横断整合性レビュー J1 反映。§3 結合早見表に版依存事実の**正本＝[v1.2 付録B『--add-dir 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)** への参照注記を追加（本表は運用早見）。
 - **v1.4（2026-06-29）**: 公式 docs 最新版（v2.1.195 相当・2026-06-28 スナップショット）への陳腐化照合を実施。`settings.local.json` も `enabledPlugins`/`extraKnownMarketplaces` の2キーに限り `settings.json` 同様 `--add-dir` で読まれる事実（docs「Additional directories」表）に合わせ、§3 結合早見表・【禁止・非推奨】注記・§6.2 チェックリストの「`settings.local.json` は `--add-dir` でも読まれない」を精密化（2キー例外を明記）。共有用途に使わない実務指針自体は不変。
 - **v1.3（2026-06-22）**: item3 残検証 C7/C12 の実機観測を反映。§5 クリーン隔離に **`--debug-file` の設定ロードログによる隔離成立の実証**（watch=空 config のみ・managed 残存・auth 非継承で再ログイン要）と「`--debug-file` は `/status` を補完する非対話の権威ある証跡」注記を追加。§6.2 落とし穴に **`defaultMode:"auto"` 無視の実観測 WARN** と付与可能スコープ＝policy/user/flag（`--settings` でも付与可）の精密化を追加。
 - **v1.2（2026-06-22）**: subagents×`--add-dir` の CLI バージョン依存（**v2.1.178+ で対応・v2.1.165 までは不可**）を §2 結合表に反映（v1.2 報告書 errata と整合）。

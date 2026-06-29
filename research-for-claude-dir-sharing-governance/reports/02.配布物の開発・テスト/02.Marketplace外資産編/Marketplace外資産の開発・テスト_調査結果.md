@@ -64,6 +64,8 @@
 | `settings.json`（permissions / hooks / env 等のその他キー） | **`--settings <Share>/.claude/settings.json`** | `--add-dir` では読まれない。command-line precedence でマージ（[§優先順位](#precedence)） |
 | `commands/` / `output-styles/` / `hooks`（settings 内） | **結合不可** | `--add-dir` 先からはロードされない。物理配置か `<Share>` で直接起動する |
 
+> **正本**: 版依存の事実（subagents の版境界・`settings.local.json` を含む2キー例外）は [v1.2 付録B『`--add-dir` 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions) を正とする（本表は運用早見）。
+
 > **`--add-dir` フラグ／`/add-dir` コマンド限定**。`permissions.additionalDirectories` 設定経由では**ファイルアクセス付与のみ**で、上記の自動ロードは一切起きない（`docs/permissions`）。
 >
 > **plugin 編との最大差**: plugin のテストは `--plugin-dir` 一本で完結したが、config 資産は **skills/agents（`--add-dir`）・CLAUDE.md/rules（`--add-dir`＋環境変数）・settings.json（`--settings`）の3経路**を使い分ける。`commands`/`output-styles`/`hooks` は結合手段が無く、テストするなら `<Share>` で直接起動するのが確実。
@@ -253,6 +255,7 @@ config 資産をテストする際、**「リポに commit したのに効かな
 
 ## 変更履歴
 
+- **v1.5（2026-06-29）**: 横断整合性レビュー J1 反映。§2 結合表に版依存事実の**正本＝[v1.2 付録B『--add-dir 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)** への参照注記を追加（本表は運用早見）。
 - **v1.4（2026-06-29）**: 横断整合性レビュー反映。`settings.local.json` も `enabledPlugins`/`extraKnownMarketplaces` の2キーに限り `settings.json` 同様 `--add-dir` で読まれる事実（docs「Additional directories」表・v2.1.195）に合わせ、§2 結合表・§優先順位注記・§6 落とし穴の「`settings.local.json` は `--add-dir` でも読まれない」を**2キー例外あり**に精密化（対の手順書 v1.4 と一致）。共有用途に使わない実務指針は不変。
 - **v1.3（2026-06-22）**: item3 残検証 **C7 / C10 / C12 を実機確認**（`claude -p … --debug-file` の設定ロードログ＝LLM 自己申告でない権威ある証跡で実証）。(C7) クリーン起動（`CLAUDE_CONFIG_DIR`=空 dir ＋ `.claude` 無し作業 dir）で watch 対象は空 config の `settings.json` のみ＝個人/project/local を排除・managed パスは継続探索・auth 非継承（`Not logged in`）を確認。(C10) `--settings` 由来が destination **`flagSettings`（command-line 層）**として `userSettings`/`projectSettings`/`localSettings` と別 destination で併存することを確認。(C12) project の `defaultMode:"auto"` に対し `[WARN] settings defaultMode "auto" ignored — only policy/user/flag settings may grant auto mode` を実観測＝無視を実証し、**付与可能スコープが policy/user/flag**（managed・`~/.claude`・`--settings`）であると判明（従来「効かせるなら `~/.claude`」を精密化）。検証用 fixture と個人ルールを含む debug ログは検証後に削除。
 - **v1.2（2026-06-22）**: subagents×`--add-dir` の **CLI バージョン依存**を反映。§2 結合表・C9 を「**v2.1.178+ で `<Share>/.claude/agents/` をスキャン・ロード／v2.1.165 までは非ロード**」と版境界付きに訂正（v1.2 報告書 errata [75] と整合）。実機検証（item 3）で `cc-docs-config-scopes-expert` の原文照合および新旧スナップショット比較により、当初 errata の「subagents は `--add-dir` で常時ロード」が版依存だったと判明。
