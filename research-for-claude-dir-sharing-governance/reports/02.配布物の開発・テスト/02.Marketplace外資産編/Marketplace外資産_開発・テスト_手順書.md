@@ -2,7 +2,7 @@
 
 > - **目的**: Marketplace（層2）で配れない config 資産（`CLAUDE.md` / `.claude/rules/` / `settings.json` / skills / agents）を、config・テンプレートリポジトリで開発・テストする実務手順。全体像・結合手段・ロード検証コマンド・落とし穴を手を動かす順に把握できる。
 > - **位置づけ**: [調査結果報告書](./Marketplace外資産の開発・テスト_調査結果.md) の派生（実務オペレーション版）。根拠・出典は報告書側にあり、本書は手順に絞る。第1フェーズ [Plugin 開発・テスト手順書](../01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md) の config 資産版。
-> - **前提環境**: Claude Code CLI。コマンドは PowerShell / bash いずれでも同形。リポジトリ記号は §0 の **`<Dev>`（資産を開発）／`<Share>`（配布 clone・共有ペイロード）／`<Other>`（日常作業リポ）** に統一する。
+> - **前提環境**: Claude Code CLI。コマンドは PowerShell / bash いずれでも同形。リポジトリ記号は §0 の **`<Dev>`（資産を開発）／`<Share>`（配布物＝雛型リポジトリ）／`<Share.claude>`（パターンB のみ・`.claude` 本体の独立リポ）／`<Other>`（日常作業リポ）** に統一する。
 > - **作成日**: 2026-06-21
 
 ---
@@ -13,21 +13,44 @@
 
 ```mermaid
 flowchart TD
-    Dev["&lt;Dev&gt;：資産を開発（ローカル）<br/>① CLAUDE.md / .claude/（rules・settings.json・skills・agents）を書く<br/>※ plugin 化のような変換なし・ネイティブロード"]
-    Dev -->|staging（格納）| Share["&lt;Share&gt;：配布 clone（共有ペイロード）"]
+    Dev["&lt;Dev&gt;：資産を開発（ローカル）<br/>CLAUDE.md / .claude/（rules・settings.json・skills・agents）を書く<br/>※ plugin 化のような変換なし・ネイティブロード"]
+
+    Dev -->|パターンA| A1["① 格納（staging）<br/>&lt;Dev&gt; → &lt;Share&gt;"]
+    Dev -->|パターンB| B1["① テスト用に用意<br/>&lt;Dev&gt;(develop) を publish-share → &lt;Share.claude&gt; → &lt;Share&gt;（submodule）<br/>※ &lt;Dev&gt; を直接結合してもよい"]
+    A1 --> Share["&lt;Share&gt;：配布物（雛型リポジトリ）"]
+    B1 --> Share
+
     Share --> Test["② テスト（2通り）"]
-    Test -->|A：スモーク確認| A["&lt;Share&gt; で claude 起動<br/>ロード/発火を確認。commands・output-styles・hooks の唯一の検証手段"]
-    Test -->|B：正式機能検証・本命| B["&lt;Other&gt; で起動して &lt;Share&gt; を結合<br/>skills/agents → --add-dir &lt;Share&gt;<br/>CLAUDE.md/rules → ＋CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1<br/>settings.json → --settings &lt;Share&gt;/.claude/settings.json"]
-    A --> Verify["③ ロード・適用を検証<br/>/memory /context /status /doctor /skills /agents"]
-    B --> Verify
+    Test -->|方法A：スモーク確認| MA["&lt;Share&gt; で claude 起動<br/>ロード/発火を確認。commands・output-styles・hooks の唯一の検証手段"]
+    Test -->|方法B：正式機能検証・本命| MB["&lt;Other&gt; で起動して &lt;Share&gt; を結合<br/>skills/agents → --add-dir ／ CLAUDE.md・rules → ＋env ／ settings.json → --settings"]
+    MA --> Verify["③ ロード・適用を検証<br/>/memory /context /status /doctor /skills /agents"]
+    MB --> Verify
     Verify --> Clean["④ クリーン隔離テスト<br/>CLAUDE_CONFIG_DIR=空dir ＋ .claude 無しの dir から起動"]
     Clean --> Gate["⑤ 公開前の必須チェック<br/>check-assets（衛生）＋ /security-review（脆弱性・read-only）"]
-    Gate -->|配布| Pub["&lt;Share&gt; を push<br/>v1.2 案A（テンプレ/clone＋起動オプション）／案D（managed settings）"]
+
+    Gate -->|パターンA| A6["⑥ 配布<br/>&lt;Share&gt; を push"]
+    Gate -->|パターンB| B6["⑥ 配布<br/>&lt;Dev&gt;(main) を publish-share → &lt;Share.claude&gt;<br/>→ &lt;Share&gt; で submodule bump→push"]
 ```
 
 **原則**: 専用ツールが無いぶん、**「ロードされたか・効いているか」を検証コマンド（③）で必ず確かめる**こと。「書いて起動したら効いているはず」と思い込まない。
 
-### 推奨リポジトリ構成（`<Dev>` / `<Other>` / `<Share>`）
+### トポロジの選択（パターンA / パターンB）
+
+開発ローカルの構成は 2 パターンある。**テスト・検証手順（§1〜§6）は両パターン共通**で、違うのは**トポロジと配布・同期運用（§7）**だけ。上図でも ②〜⑤ は両パターン共通で、**① 格納／publish と ⑥ 配布だけがパターン依存**（パターンA=staging/push ／ パターンB=publish→submodule bump・§7.2）。
+
+> **用語の別軸に注意**: 図中の **「方法A／方法B」はテスト手段**（§2 ネイティブ起動／§3 結合）の区別であり、本節で導入する **「パターンA／パターンB」＝トポロジ**とは**別の軸**。両者は独立に組み合わさる（例: パターンB でも検証は方法A・方法B の両方を使う）。
+
+| | パターンA: 単一 `<Share>` | パターンB: `.claude` を submodule 分割 |
+|---|---|---|
+| `<Share>` の `.claude` | 通常ディレクトリ（その repo に同梱） | 独立リポ `<Share.claude>` の **git submodule** |
+| 登場リポ | `<Dev>` / `<Share>` / `<Other>` | `<Dev>` / **`<Share.claude>`** / `<Share>`（雛型リポジトリ）/ `<Other>` |
+| 配布 | `<Share>` を clone＋起動オプション参照／push | `<Dev>`→`<Share.claude>` を publish→`<Share>` が submodule bump。`<Share>` はコピー展開できる雛型 |
+| 向くケース | 単一の共有設定を 1 リポで回す | `.claude` を branch 非依存の独立資産として複数プロジェクトで共有・雛型化したい |
+| 詳細 | §7.1 | §7.2 |
+
+> 以降 **§1〜§6 は両パターン共通**。配布・同期運用だけ **§7** でパターン別に分かれる。`<Share>` の構成・共有境界の鉄則（直下）は両パターンに共通して適用される（パターンB では `<Share>/.claude` がそのまま submodule になる）。
+
+### パターンA の構成（単一 `<Share>`・`<Dev>` / `<Other>` / `<Share>`）
 
 ローカルのリポジトリを役割で3分類すると動線が明確（仕組みは以降のまま）:
 
@@ -220,26 +243,128 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 
 ### 6.2 落とし穴チェックリスト
 
-「commit したのに効かない」を生む仕様。テスト前に確認する。先頭の **🛠 はスクリプト（check-assets）で自動判定できる項目／🧑 は人手で確認する項目**。個人ファイル系の 🛠 は、`<Share>` が git リポジトリなら **Git 追跡されているか**で判定する（**追跡＝FAIL**＝clone に含まれ漏れる／**未追跡で実在＝WARN**＝gitignore 済みで配布はされないが掃除推奨／不在＝PASS）。非 git の素ディレクトリでは実在＝FAIL にフォールバックする。
+「commit したのに効かない」を生む仕様。テスト前に確認する。**🛠（スクリプト `check-assets` で自動判定できる項目）を上に、🧑（人手で目視確認する項目）を下にまとめた**。個人ファイル系の 🛠 は、`<Share>` が git リポジトリなら **Git 追跡されているか**で判定する（**追跡＝FAIL**＝clone に含まれ漏れる／**未追跡で実在＝WARN**＝gitignore 済みで配布はされないが掃除推奨／不在＝PASS）。非 git の素ディレクトリでは実在＝FAIL にフォールバックする。
 
-- [ ] 🧑 **trust 承認後**にテストしているか（clone/テンプレ展開直後は未承認でフル有効化されない。`autoMemoryDirectory`・`extraKnownMarketplaces` の install prompt は trust 後）
+#### パターンA/B 共通
+
+**両パターンとも必須**（パターンB でも下記はすべて確認する。次の「パターンB 固有」は本リストへの**上乗せ**であり、置き換えではない）。
+
+**🛠 スクリプト自動判定**
+
 - [ ] 🛠 **project/local では無視される security キー**を repo に書いていないか（効かない・スクリプトは WARN で検出）:
   - `defaultMode: "auto"`（project/local で無視・v2.1.142+。**付与できるのは policy(managed)/user(`~/.claude`)/flag(`--settings`)** スコープのみ）
   - `skipDangerousModePermissionPrompt`（project で無視）
   - `autoMode` / `useAutoModeDuringPlan`（shared project settings から読まれない）
   - **🔎 実機観測（item3 C12・2026-06-22）**: project に `defaultMode:"auto"` を置き `--debug-file` 起動すると `[WARN] settings defaultMode "auto" ignored — only policy/user/flag settings may grant auto mode (projectSettings and localSettings are repo-controllable)` が出力され、無視を実機で確認。`--settings`（flag 層）でも付与可能な点は従来記載（「`~/.claude` のみ」）の精密化。
-- [ ] 🧑 `commands` / `output-styles` / `hooks` / `settings.json` の大半を **`--add-dir` で結合したつもりになっていないか**（読まれない。直接起動か物理配置で）
-- [ ] 🧑 `--add-dir` に渡すのは `.claude/` の**親**フォルダか（フォルダ名を `.claude` にしない）
 - [ ] 🛠 参照元（`<Share>` 等）に**個人の `CLAUDE.local.md` が残っていないか**（環境変数 ON 時に参照側へ漏れる）
-- [ ] 🧑 参照側に読ませたくないリポ固有情報を、`CLAUDE.md`/`.claude/CLAUDE.md` でなく **`README.md`（非ロード）に置いた**か（ルート/`.claude/` の置き分けでは共有可否を制御できない）
 - [ ] 🛠 `<Share>` に **`settings.local.json` を置いていないか**（project 個人・非共有。例外は `enabledPlugins`/`extraKnownMarketplaces` の2キーのみ `--add-dir` で読まれる点。共有したい設定は `settings.json` に置き `--settings` で渡す）
 - [ ] 🛠 `settings.json` が **valid JSON** か（不正だと `/doctor` でも検出される）
+
+**🧑 人手で目視確認**
+
+- [ ] 🧑 **trust 承認後**にテストしているか（clone/テンプレ展開直後は未承認でフル有効化されない。`autoMemoryDirectory`・`extraKnownMarketplaces` の install prompt は trust 後）
+- [ ] 🧑 `commands` / `output-styles` / `hooks` / `settings.json` の大半を **`--add-dir` で結合したつもりになっていないか**（読まれない。直接起動か物理配置で）
+- [ ] 🧑 `--add-dir` に渡すのは `.claude/` の**親**フォルダか（フォルダ名を `.claude` にしない）
+- [ ] 🧑 参照側に読ませたくないリポ固有情報を、`CLAUDE.md`/`.claude/CLAUDE.md` でなく **`README.md`（非ロード）に置いた**か（ルート/`.claude/` の置き分けでは共有可否を制御できない）
 - [ ] 🧑 反映タイミングを踏まえているか（settings 即時／`model`・`outputStyle`・**環境変数は再起動側**／skills ホットリロード）
 - [ ] 🧑 `/doctor` が schema エラーを出していないか、`/memory`・`/status` で**意図したファイル・レイヤが実際にロードされているか**を確認したか
 
+#### パターンB（submodule 分割）固有
+
+**§7.2 採用時に、上の「共通」へ上乗せして確認する**（共通分は省略不可）。
+
+**🛠 スクリプト自動判定**
+
+- [ ] 🛠 `<Share.claude>` に**個人ファイル（`settings.local.json`/`CLAUDE.local.md`）を追跡していないか**（`.gitignore`＋`check-assets` で二重防御。publish は追跡ファイルのみミラーするため未追跡なら混入しないが、誤追跡は漏れる）
+
+**🧑 人手で目視確認**
+
+- [ ] 🧑 `<Share>` の submodule（`.claude`）を**初期化したか**（`git submodule update --init`）。未初期化だと `.claude` が空で、`--add-dir <Share>` しても**エラーなく何も載らない**（`/skills`・`/memory` で要確認）
+- [ ] 🧑 root `CLAUDE.md` と `<Share.claude>` 側の `.claude/CLAUDE.md` を**二重に書いていないか**（環境変数 ON 時に両方ロードされ重複管理になる。共通ルールはどちらか一方＝通常 `.claude/CLAUDE.md` に寄せる）
+- [ ] 🧑 `.gitmodules` の `branch` が公開基準（`main`）に設定されているか（`submodule update --remote` の追従先）
+
 ---
 
-## 7. （注記）層3 managed settings の検証
+## 7. 配布・同期運用【パターン分岐】
+
+§0 で選んだトポロジに応じて、資産を `<Share>` へ届け（**配布**）、利用側を最新化（**同期**）する運用が分かれる。テスト・検証（§1〜§6）は共通。
+
+### 7.1 パターンA: 単一 `<Share>`
+
+- **配布**: `<Dev>` で固めた資産を `<Share>` に格納（staging）し、`<Share>` を push する（`<Share>` 自体が公開リポ）。
+- **参照（`<Other>`）**: `claude --add-dir <Share>`（＋ §3 の env / `--settings`）。`<Other>` での日常作業がそのまま公開前テストになる。
+- **最新化**: `<Other>` 側は `git -C <Share> pull --ff-only` で `<Share>` を更新（**取得のみ・push を伴わない**。日次の作業開始時にランチャーで自動化してよい）。
+
+### 7.2 パターンB: `.claude` を submodule 分割（`<Share.claude>`）
+
+`.claude` を独立リポ `<Share.claude>` に切り出し、配布物 `<Share>`（雛型リポジトリ）がそれを `.claude` submodule として取り込む。`<Share.claude>` が「配る `.claude` の単一の真実源」になる。
+
+#### トポロジ
+
+```mermaid
+flowchart LR
+    Dev["&lt;Dev&gt;<br/>資産を開発"] -->|publish（Sync A・手動ゲート）| Body["&lt;Share.claude&gt;<br/>.claude 本体リポ<br/>（公開の単一真実源）"]
+    Body -->|submodule| Share["&lt;Share&gt;<br/>雛型(配布)リポジトリ<br/>（.claude = submodule）"]
+    Share -->|--add-dir / コピー展開| Other["&lt;Other&gt;<br/>日常作業リポ"]
+    Body -.->|refresh（Sync B・取得のみ）| Share
+```
+
+| 記号 | 役割 |
+|---|---|
+| `<Dev>` | 資産を開発 |
+| `<Share.claude>` | `.claude` 本体の独立リポ。submodule 元・公開の単一真実源 |
+| `<Share>` | `<Share.claude>` を `.claude` submodule として取り込む**雛型(配布)リポジトリ**。`--add-dir` で参照、または直下をコピー展開して使う配布物そのもの |
+| `<Other>` | 日常作業リポ。`<Share>` を参照 |
+
+#### ブランチ方針（`<Dev>`）
+
+- **develop** = クリーン隔離テスト（§5）の基準。
+- **main**（GitHub default）= 公開基準。publish は main に取り込んだ状態を対象にする。
+- `<Share>` の `.gitmodules` に `branch = main` を設定し、submodule の追従先を公開基準に固定する。
+
+#### 配布（Sync A・publish・手動ゲート）
+
+`<Dev>` の `.claude`（追跡ファイルのみ）を `<Share.claude>` へ反映する**意図的な公開操作**。`scripts/publish-share` を使う:
+
+```bash
+# bash
+./scripts/publish-share.sh  [--ref <ref>] --share <Share.claude のパス>
+# PowerShell
+.\scripts\publish-share.ps1 [-Ref <ref>] -ShareBody <Share.claude のパス>
+# 例: groom 済みブランチを publish
+./scripts/publish-share.sh --ref develop --share /path/to/<Share.claude>
+```
+
+- **ref 指定式**（既定 `main`＝公開基準）。`git archive <ref> .claude` で取り出すため **checkout 不要**で任意 ref を publish できる。
+- **公開前ゲートを内蔵**: `check-assets`（§6.1・**取り出した実体**を検査）→ `/security-review` の手動確認 → 追跡ファイルのみミラー → `<Share.claude>` を commit/push。
+- **安全弁**: 取り出した `.claude` が空なら中止（`<Share.claude>` を空で上書きしない）。
+- **自動化しない**（session 開始 hook 等に載せない）。公開前ゲートを素通りさせないため、意図的な手動実行に限る。
+- publish 後、`<Share>` で submodule を bump:
+
+```bash
+git -C <Share> submodule update --remote .claude
+git -C <Share> add .claude && git -C <Share> commit -m "chore: bump .claude" && git -C <Share> push
+```
+
+#### 最新化（Sync B・refresh・自動可）
+
+利用側（`<Share>`、および `<Share>` を参照/コピーした `<Other>`）で**最新の共有 `.claude` を取得のみ**する。**push を伴わない**ので、日次の作業開始時にランチャーで自動実行してよい:
+
+```bash
+git -C <Share> pull --ff-only
+git -C <Share> submodule update --init --remote   # .claude を最新へ（init も兼ねる）
+```
+
+- ランチャー連携は**消費側（`<Share>`/`<Other>`）のみ**。供給元 `<Dev>` には入れない（逆流防止）。
+- publish（Sync A）とは別物。**refresh は決して push しない／publish はランチャー・hook に載せない**。
+
+#### 雛型としてのコピー利用
+
+`<Share>` 直下（`.claude` の中身＋`README.md`＋`*.sample`）を既存プロジェクトへ**コピー**して即 Claude Code 化する（`.git`/`.gitmodules` は持ち込まない＝中身だけをコピー）。`CLAUDE.md` はコピー先で `CLAUDE.md.sample` を改名して作成する。submodule 固有の注意は [§6.2 パターンB 固有](#pitfalls) を参照。
+
+---
+
+## 8. （注記）層3 managed settings の検証
 
 managed settings で配る場合の確認（詳細は v1.2 案D・本タスクのスコープ外）:
 
@@ -252,6 +377,7 @@ managed settings で配る場合の確認（詳細は v1.2 案D・本タスク�
 
 ## 変更履歴
 
+- **v1.6（2026-06-29）**: 開発ローカルのトポロジを **パターンA（単一 `<Share>`）／パターンB（`.claude` を独立リポ `<Share.claude>` に submodule 分割）** として正式化。§0 に「トポロジの選択」（§1〜§6 は両パターン共通・配布運用のみ §7 で分岐）を追加し、旧「推奨リポジトリ構成」を「パターンA の構成」に改題。全体像図は **① 格納/publish・⑥ 配布をパターンA箱／パターンB箱に分岐**し、テスト手段「方法A/B」とトポロジ「パターンA/B」のラベル衝突も解消。§7 を「配布・同期運用【パターン分岐】」に再編（7.1 A／7.2 B: トポロジ図・ブランチ方針〔develop=テスト基準／main=公開基準〕・publish〔Sync A・`publish-share`・手動ゲート・ref 指定〕・refresh〔Sync B・取得のみ・自動可〕・雛型コピー利用）。§6.2 を **🛠（スクリプト自動）上／🧑（人手目視）下**に並べ替え、**「パターンA/B 共通」「パターンB 固有」の見出し**に再構成（共通分はパターンB でも必須＝固有は上乗せの明示）。パターンB 固有として submodule の落とし穴（未初期化空振り・二重ロード・個人ファイル誤追跡・`.gitmodules` branch）を追加。旧 §7（層3 注記）を §8 へ繰り下げ。`scripts/` に `publish-share.{sh,ps1}` の正本を追加。`<Share>` の役割名を「雛型(配布)リポジトリ」と明確化。
 - **v1.5（2026-06-29）**: 横断整合性レビュー J1 反映。§3 結合早見表に版依存事実の**正本＝[v1.2 付録B『--add-dir 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)** への参照注記を追加（本表は運用早見）。
 - **v1.4（2026-06-29）**: 公式 docs 最新版（v2.1.195 相当・2026-06-28 スナップショット）への陳腐化照合を実施。`settings.local.json` も `enabledPlugins`/`extraKnownMarketplaces` の2キーに限り `settings.json` 同様 `--add-dir` で読まれる事実（docs「Additional directories」表）に合わせ、§3 結合早見表・【禁止・非推奨】注記・§6.2 チェックリストの「`settings.local.json` は `--add-dir` でも読まれない」を精密化（2キー例外を明記）。共有用途に使わない実務指針自体は不変。
 - **v1.3（2026-06-22）**: item3 残検証 C7/C12 の実機観測を反映。§5 クリーン隔離に **`--debug-file` の設定ロードログによる隔離成立の実証**（watch=空 config のみ・managed 残存・auth 非継承で再ログイン要）と「`--debug-file` は `/status` を補完する非対話の権威ある証跡」注記を追加。§6.2 落とし穴に **`defaultMode:"auto"` 無視の実観測 WARN** と付与可能スコープ＝policy/user/flag（`--settings` でも付与可）の精密化を追加。
