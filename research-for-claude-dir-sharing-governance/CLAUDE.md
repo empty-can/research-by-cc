@@ -16,12 +16,15 @@
 |---|---|
 | 結論・構成案（**確定版 v1.2**） | `reports/01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md` |
 | クロスレビュー報告書（3観点・各1.0版） | `reports/01.配布・統制方針調査/レビュー/`（論理整合性／実用性＋出典照合／作業指示者＋人間読み手） |
-| 層2 配布物の開発・テスト 調査結果（v1.0） | `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin・Marketplace配布物の開発・テスト_調査結果.md` |
-| Plugin 開発・テスト手順書（v1.0） | `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md` |
-| Marketplace 外資産の開発・テスト 調査結果（v1.0） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産の開発・テスト_調査結果.md` |
-| Marketplace 外資産 開発・テスト手順書（v1.0） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産_開発・テスト_手順書.md` |
+| 層2 配布物の開発・テスト 調査結果 | `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin・Marketplace配布物の開発・テスト_調査結果.md` |
+| Plugin 開発・テスト手順書 | `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md` |
+| Marketplace 外資産の開発・テスト 調査結果 | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産の開発・テスト_調査結果.md` |
+| Marketplace 外資産 開発・テスト手順書 | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産_開発・テスト_手順書.md` |
 | 開発・テスト補助スクリプト（clean-test-env / check-payload・bash+PowerShell） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/scripts/` |
 | 実装テンプレート（層1+2・3チャネル構成の雛形） | `reports/03.実装テンプレート（層1+2）/`（README ＋ `layer1-repo-template/` ＋ `layer2-plugin/`） |
+| 公開 README（GitHub 閲覧者向け・CLAUDE.md 派生） | `README.md` |
+
+> 各成果物の版は各ファイル末尾の変更履歴を参照（索引には版番号を持たせない）。
 
 ## 参照リソース
 
@@ -46,4 +49,6 @@
 - [x] 02.Marketplace外資産編 の Sonnet 動作検証（2026-06-22・実機）→ **重大検出: subagents×`--add-dir` は v2.1.178 版依存**（v2.1.165=非ロード／v2.1.178+=ロード）。現行✅＋版境界注記へ v1.2 errata 再訂正・出典 [75] 追加（225dda9）。対話実機で **#1 `/memory`＝`<Share>/.claude/CLAUDE.md` ロード確認（案1 生命線）／#2 `/agents`＝`--add-dir` 経由 subagent ロードを一意プローブで立証**。check-payload を案1（Git 追跡基準）へ改修も併施（75cc12d）。実 `<Share>`＝`base-dev-kit-for-cc` を grooming（PR #1）
 - [x] item3 残検証 **C7/C10/C12 を実機確認**（2026-06-22・`--debug-file` の設定ロードログ＝非対話の権威ある証跡）。C7=クリーン隔離で個人/project/local 排除・managed 残存・auth 非継承を実証／C10=`--settings` は `flagSettings`（command-line 層）として各スコープと別 destination で併存／C12=project の `defaultMode:"auto"` 無視を WARN で実観測＋付与可能スコープ＝policy/user/flag を判明。調査結果 v1.3・手順書 v1.3 に反映。item3 完全クローズ
 - [x] 実装スコープ決定（**層1+2＝テスト可能なコア**を採用・作業指示者選択）と 3 チャネル構成のテンプレート雛形作成 → `reports/03.実装テンプレート（層1+2）/`（2026-06-22）。base-dev-kit 資産を層1（ガバナンス＋起動装置）／層2（plugin: skills/agent/output-style/hook）へ振り分け。`claude plugin validate`（`--strict`）・marketplace validate ともにパス。**層3 は通常マシンで実機検証不可のため雛形は作らずレポート §解決案 層3系・付録A の記述に委譲**
-- [ ] （任意）公開 `README.md` 作成（CLAUDE.md からの派生・GitHub 閲覧者向け）
+- [x] 公開 `README.md` 作成（CLAUDE.md からの派生・GitHub 閲覧者向け・コミット済 d3c766d）
+- [x] 成果物群の公式 docs 最新版（v2.1.195・2026-06-28）照合と横断整合性レビュー（2026-06-29・各5観点 SubAgent 並列）→ テンプレ/手順書/調査結果/v1.2/索引の陳腐化・不整合を修正（settings.local.json 2キー例外の伝播・subagents 版境界の統一・`<D>`→`<Share>`・`sub-agents`→`subagents`・MCP ポリシー一本化・テンプレ誤誘導の是正 等）
+- [ ] （別タスク）`--add-dir` 例外ロード表の**正本一元化**（同一表が6箇所以上に複製され片側更新漏れの温床。正本を v1.2 に定め他は参照リンクへ寄せる。横断整合性レビュー E-3 起票）

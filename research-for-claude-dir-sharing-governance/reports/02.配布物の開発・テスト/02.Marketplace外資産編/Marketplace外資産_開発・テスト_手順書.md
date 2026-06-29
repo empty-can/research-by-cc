@@ -113,7 +113,7 @@ claude --settings <Share>/.claude/settings.json
 |---|---|
 | `skills/` | `--add-dir <Share>`（live reload） |
 | `agents/`（subagents） | `--add-dir <Share>`（**v2.1.178+**・v2.1.165 までは不可） |
-| `settings.json` の `enabledPlugins` / `extraKnownMarketplaces` | `--add-dir <Share>`（この2キーのみ） |
+| `settings.json` / `settings.local.json` の `enabledPlugins` / `extraKnownMarketplaces` | `--add-dir <Share>`（この2キーのみ） |
 | `CLAUDE.md` / `rules/` / `CLAUDE.local.md` | `--add-dir <Share>` ＋ `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` |
 | `settings.json`（permissions / hooks / env 等） | `--settings <Share>/.claude/settings.json` |
 | `commands/` / `output-styles/` / `hooks` | **結合不可** → `<Share>` で直接起動（方法A）か物理配置 |
@@ -128,7 +128,7 @@ claude --settings <Share>/.claude/settings.json
 > - 参照側に読ませたくない memory は `README.md` 等の**非 memory ファイル**へ（ルート/`.claude/` の置き分けでは共有可否を制御できない）。
 >
 > **【禁止・非推奨】**
-> - **`settings.local.json` は共有用途に使わない**（project 個人・gitignore 専用で `--add-dir` でも読まれない）。**共有したい設定は `settings.json`**。`settings` の使い分け: 共有＝`<Share>/.claude/settings.json`（`--settings`）／マシン全リポの個人既定＝`~/.claude/settings.json`（user スコープ）／特定リポの個人 override＝`<project>/.claude/settings.local.json`。
+> - **`settings.local.json` は共有用途に使わない**（project 個人・gitignore 専用。例外として `enabledPlugins` / `extraKnownMarketplaces` の2キーは `settings.json` 同様 `--add-dir` で読まれるが、それ以外のキーは読まれない）。**共有したい設定は `settings.json`**。`settings` の使い分け: 共有＝`<Share>/.claude/settings.json`（`--settings`）／マシン全リポの個人既定＝`~/.claude/settings.json`（user スコープ）／特定リポの個人 override＝`<project>/.claude/settings.local.json`。
 
 ---
 
@@ -230,7 +230,7 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 - [ ] 🧑 `--add-dir` に渡すのは `.claude/` の**親**フォルダか（フォルダ名を `.claude` にしない）
 - [ ] 🛠 参照元（`<Share>` 等）に**個人の `CLAUDE.local.md` が残っていないか**（環境変数 ON 時に参照側へ漏れる）
 - [ ] 🧑 参照側に読ませたくないリポ固有情報を、`CLAUDE.md`/`.claude/CLAUDE.md` でなく **`README.md`（非ロード）に置いた**か（ルート/`.claude/` の置き分けでは共有可否を制御できない）
-- [ ] 🛠 `<Share>` に **`settings.local.json` を置いていないか**（project 個人・非共有＝`CLAUDE.local.md` と同じ。共有したい設定は `settings.json` に置き `--settings` で渡す）
+- [ ] 🛠 `<Share>` に **`settings.local.json` を置いていないか**（project 個人・非共有。例外は `enabledPlugins`/`extraKnownMarketplaces` の2キーのみ `--add-dir` で読まれる点。共有したい設定は `settings.json` に置き `--settings` で渡す）
 - [ ] 🛠 `settings.json` が **valid JSON** か（不正だと `/doctor` でも検出される）
 - [ ] 🧑 反映タイミングを踏まえているか（settings 即時／`model`・`outputStyle`・**環境変数は再起動側**／skills ホットリロード）
 - [ ] 🧑 `/doctor` が schema エラーを出していないか、`/memory`・`/status` で**意図したファイル・レイヤが実際にロードされているか**を確認したか
@@ -250,6 +250,7 @@ managed settings で配る場合の確認（詳細は v1.2 案D・本タスク�
 
 ## 変更履歴
 
+- **v1.4（2026-06-29）**: 公式 docs 最新版（v2.1.195 相当・2026-06-28 スナップショット）への陳腐化照合を実施。`settings.local.json` も `enabledPlugins`/`extraKnownMarketplaces` の2キーに限り `settings.json` 同様 `--add-dir` で読まれる事実（docs「Additional directories」表）に合わせ、§3 結合早見表・【禁止・非推奨】注記・§6.2 チェックリストの「`settings.local.json` は `--add-dir` でも読まれない」を精密化（2キー例外を明記）。共有用途に使わない実務指針自体は不変。
 - **v1.3（2026-06-22）**: item3 残検証 C7/C12 の実機観測を反映。§5 クリーン隔離に **`--debug-file` の設定ロードログによる隔離成立の実証**（watch=空 config のみ・managed 残存・auth 非継承で再ログイン要）と「`--debug-file` は `/status` を補完する非対話の権威ある証跡」注記を追加。§6.2 落とし穴に **`defaultMode:"auto"` 無視の実観測 WARN** と付与可能スコープ＝policy/user/flag（`--settings` でも付与可）の精密化を追加。
 - **v1.2（2026-06-22）**: subagents×`--add-dir` の CLI バージョン依存（**v2.1.178+ で対応・v2.1.165 までは不可**）を §2 結合表に反映（v1.2 報告書 errata と整合）。
 - **v1.1（2026-06-22）**: `check-payload`（`scripts/`・bash/PowerShell）を **Git 追跡基準**へ改修（追跡＝FAIL／未追跡で実在＝WARN／不在＝PASS・非 git の素ディレクトリのみ実在＝FAIL）し、共有共通ルールの所在期待を `.claude/CLAUDE.md`（案1）へ変更（ルート `CLAUDE.md` が追跡されている場合は `--add-dir`＋env 漏れを WARN）。§6.2 イントロに個人ファイル系 🛠 の追跡基準判定を明記。`base-dev-kit-for-cc` を実 `<Share>` として整備した実地検証（両版 FAIL=0）に基づく改修。

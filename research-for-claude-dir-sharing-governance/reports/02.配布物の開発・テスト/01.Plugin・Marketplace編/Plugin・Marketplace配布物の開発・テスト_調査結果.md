@@ -150,7 +150,7 @@ skill は plugin に同梱せず `.claude/skills/` 単体でも配布できる�
 | 構成 | `--add-dir` から自動ロード |
 |---|---|
 | skills（`.claude/skills/`） | ✅ live reload |
-| **subagents（`.claude/agents/`）** | ✅ |
+| **subagents（`.claude/agents/`）** | ✅（v2.1.178+。v2.1.165 までは非ロード） |
 | `settings.json` の `enabledPlugins` / `extraKnownMarketplaces` | ✅（この2キーのみ） |
 | `CLAUDE.md` / `.claude/rules/` / `CLAUDE.local.md` | △ `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` を付けた時のみ |
 | `settings.json` のそれ以外（permissions/hooks 等）・commands・output-styles | ❌ |
@@ -301,5 +301,6 @@ plugin ディレクトリ全体が cache にコピーされるため、`skills/<
 
 ## 変更履歴
 
+- **v1.2（2026-06-29）**: 横断整合性レビュー反映。§4 表の subagents×`--add-dir` を **「✅（v2.1.178+。v2.1.165 までは非ロード）」** と版境界付きに統一（v1.2 報告書 errata [75]・Marketplace外資産編 C9 と整合）。従来は本編のみ無条件 ✅ で版境界が欠落し、版を跨ぐ読者に「常時ロード」と誤読される恐れがあった。
 - **v1.1（2026-06-25）**: §7「plugin 配布時のパス解決・可変状態・同梱物アクセス（実装制約）」を新設（実 skill の plugin 化テストで顕在化）。`${CLAUDE_SKILL_DIR}`／`${CLAUDE_PLUGIN_ROOT}` の置換範囲と env export、cache の ephemeral 性（書込禁止・約7日 orphan）と `${CLAUDE_PLUGIN_DATA}` への可変状態退避、README/references のユーザアクセス制約（UI 非閲覧→`homepage`）、`skills/<name>/` 構成要素別挙動を原文照合で確定。§出典に S16〜S20 を追加。[手順書 v1.1 §6](./Plugin開発・テスト_手順書.md) の根拠。旧§7「v1.2との接続・含意」は §8 へ繰り下げ。原文照合は `cc-docs-plugins-marketplace-expert` agent。
 - **v1.0（2026-06-21）**: 初版。公式 docs（plugins / plugin-marketplaces / plugins-reference / skills）の原文照合に基づき、層2 配布物の開発・テストフロー・手段・制約・検証を整理。レビュー指摘反映として `--debug` の実行時カバー範囲、`validate` の必須/推奨条件、`skill-creator` の機能詳細・公開 URL を補強。純正 `plugin-dev` を README＋`create-plugin.md`／agent 定義／manifest の精読で裏取りし [§6](#plugin-dev) を追加（8 フェーズ詳細・3 agent・6 スクリプト・`commands/` レガシー指針・docs カタログ掲載の確認を含む）。**Sonnet 動作検証（実機 `claude plugin validate` v2.1.185）の反映**: `plugin.json` の `author` ＝オブジェクト型・`marketplace.json` の `owner` ＝必須、`--add-dir` は skills だけでなく **subagents（`.claude/agents/`）も自動ロード**（§4 訂正）、`--debug` 出力先 `~/.claude/debug/<session-id>.txt`、`validate --strict`。

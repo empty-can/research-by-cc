@@ -11,7 +11,7 @@
   コピー／commit する最小骨格。**層2 で運べないガバナンス資産**（`CLAUDE.md` / `rules` /
   `permissions`）と、**層2 を起動するための装置**（`settings.json` の
   `extraKnownMarketplaces` / `enabledPlugins`）に絞る。
-- **層2＝Plugin / Marketplace**（`layer2-plugin/`）: skills / sub-agents / hooks /
+- **層2＝Plugin / Marketplace**（`layer2-plugin/`）: skills / subagents / hooks /
   output-styles などの**機能資産**を一元更新可能な plugin に集約する骨格。
 
 実装の起点は既存の `<Share>` リポジトリ **`base-dev-kit-for-cc`**
@@ -22,7 +22,7 @@
 
 | base-dev-kit の資産 | 寄せる先 | 雛形での所在 | 根拠（レポート） |
 |---|---|---|---|
-| skills（commit-and-pr / orchestrate / request-new-skill / review-skill-request） | **層2** | `layer2-plugin/plugins/base-dev-kit/skills/` | 一元更新・版管理（マトリクス①） |
+| skills（commit-and-pr / orchestrate / request-new-skill / review-skill-request） | **層2** | `layer2-plugin/plugins/base-dev-kit/skills/`（形式雛形 `example-skill/` のみ同梱・実 skill は配布時に追加） | 一元更新・版管理（マトリクス①） |
 | `code-reviewer` sub-agent | **層2** | `layer2-plugin/plugins/base-dev-kit/agents/` | plugin 経由可（hooks/mcpServers/permissionMode 不使用＝①△に非該当） |
 | `code-review` output-style | **層2** | `layer2-plugin/plugins/base-dev-kit/output-styles/` | 機能資産（マトリクス①） |
 | SessionStart hook（`git status --short`） | **層2** | `layer2-plugin/plugins/base-dev-kit/hooks/hooks.json` | hooks は plugin で自己完結（①）。本例はインラインコマンドのみで同梱スクリプト不要。スクリプトを同梱する hook は `${CLAUDE_PLUGIN_ROOT}/...` で参照する |
@@ -30,7 +30,7 @@
 | `rules/coding-standards.md` | **層1** | `layer1-repo-template/.claude/rules/` | 常時 rule は skill 化でも代替不可（②） |
 | `permissions`（deny/allow） | **層1** | `layer1-repo-template/.claude/settings.json` | plugin で運べない（②） |
 | **層2 起動装置**（extraKnownMarketplaces / enabledPlugins） | **層1** | `layer1-repo-template/.claude/settings.json` | 層2 有効化の前提・project commit（②） |
-| README（リポ固有情報） | 層1（隔離先） | `layer1-repo-template/README.md.example` | README 隔離方式（`--add-dir` 非ロード） |
+| README（リポ固有情報） | 層1（隔離先） | `layer1-repo-template/README.md.example` | README 隔離方式（README は memory ファイルでなく `--add-dir`+env でも非ロード） |
 
 > **△回避の注記**: `hooks` / `mcpServers` / `permissionMode` を使う sub-agent は plugin 経由だと
 > 当該設定が無視される（マトリクス①△）。そうした sub-agent は層1 commit か層3 managed へ。
@@ -47,6 +47,8 @@
 層2 plugin が誘導される。**user スコープ（`~/.claude/`）はチーム配布にならない**点に注意。
 ただし「clone だけで即利用可」ではなく、trust 時のインストールプロンプト、fresh machine での
 `claude plugin install` が必要になりうる（レポート §解決案 層2系の注意事項）。
+
+> **コピー後の置換（必須）**: 雛形のプレースホルダを自組織の実値へ置換する——`.claude/settings.json` の `your-org/base-dev-kit-marketplace`（→ 実 Marketplace リポジトリ）、`marketplace.json`・`plugin.json` の `Your Team`・`team@example.com`（→ 実チーム名・連絡先）。未置換のままだと存在しない repo を参照し層2 が起動しない。
 
 ## ディレクトリ構成
 
@@ -75,7 +77,7 @@
             ├── skills/example-skill/SKILL.md
             ├── agents/code-reviewer.md
             ├── output-styles/code-review.md
-            └── hooks/hooks.json      # SessionStart（${CLAUDE_PLUGIN_ROOT} 参照）
+            └── hooks/hooks.json      # SessionStart（インライン git status --short）
 ```
 
 > Marketplace と plugin は本雛形では 1 リポジトリ内に併置しているが、実運用では
