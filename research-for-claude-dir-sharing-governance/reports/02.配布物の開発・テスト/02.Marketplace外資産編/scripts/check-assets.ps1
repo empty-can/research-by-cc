@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  check-payload.ps1 — 配布する共有ペイロード <Share> を公開前に機械チェックする（手順書 §6）
+  check-assets.ps1 — 配布する共有ペイロード <Share> を公開前に機械チェックする（手順書 §6）
 
 .DESCRIPTION
   「6. 落とし穴チェックリスト」のうちスクリプトで検査可能な項目を自動判定する。
@@ -16,7 +16,7 @@
   FAIL が1件以上で終了コード 1、なければ 0（CI 利用可）。
 
 .EXAMPLE
-  .\check-payload.ps1 -Share C:\path\to\share
+  .\check-assets.ps1 -Share C:\path\to\share
 #>
 param(
   [Parameter(Mandatory = $true)][string]$Share
@@ -59,7 +59,7 @@ function Check-Personal($rel, $label) {
   }
 }
 
-Write-Host ("[check-payload] 対象: $Share（" + $(if ($isGit) { 'git リポジトリ: 追跡基準' } else { '非 git: 実在基準' }) + "）")
+Write-Host ("[check-assets] 対象: $Share（" + $(if ($isGit) { 'git リポジトリ: 追跡基準' } else { '非 git: 実在基準' }) + "）")
 
 # 1. 個人ファイル CLAUDE.local.md
 Check-Personal 'CLAUDE.local.md'         'CLAUDE.local.md'
@@ -107,8 +107,8 @@ if ($isGit -and (Test-Tracked 'CLAUDE.md')) {
 }
 
 if ($script:fail -eq 0) {
-  Write-Host "[check-payload] 結果: 重大な問題なし（FAIL=0）"
+  Write-Host "[check-assets] 結果: 重大な問題なし（FAIL=0）"
 } else {
-  Write-Host "[check-payload] 結果: FAIL あり。上記を修正してください"
+  Write-Host "[check-assets] 結果: FAIL あり。上記を修正してください"
 }
 exit $script:fail
