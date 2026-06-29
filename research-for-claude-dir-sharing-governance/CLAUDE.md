@@ -20,7 +20,7 @@
 | Plugin 開発・テスト手順書 | `reports/02.配布物の開発・テスト/01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md` |
 | Marketplace 外資産の開発・テスト 調査結果 | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産の開発・テスト_調査結果.md` |
 | Marketplace 外資産 開発・テスト手順書 | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産_開発・テスト_手順書.md` |
-| 開発・テスト補助スクリプト（clean-test-env / check-assets・bash+PowerShell） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/scripts/` |
+| 開発・テスト補助スクリプト（clean-test-env / check-assets / publish-share・bash+PowerShell） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/scripts/` |
 | 実装テンプレート（層1+2・3チャネル構成の雛形） | `reports/03.実装テンプレート（層1+2）/`（README ＋ `layer1-repo-template/` ＋ `layer2-plugin/`） |
 | 公開 README（GitHub 閲覧者向け・CLAUDE.md 派生） | `README.md` |
 
