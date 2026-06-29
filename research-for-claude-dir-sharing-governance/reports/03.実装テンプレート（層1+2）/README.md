@@ -93,7 +93,7 @@
   - 構造検証 = `claude plugin validate layer2-plugin/plugins/base-dev-kit`
 - **層1（Marketplace 外資産）の開発・テスト**: `reports/02.配布物の開発・テスト/02.Marketplace外資産編/`
   - ネイティブ起動スモーク（方法A）／`--add-dir` + env + `--settings` 結合検証（方法B）
-  - 公開前ゲート = `check-payload`（衛生）＋ `/security-review`（脆弱性）
+  - 公開前ゲート = `check-assets`（衛生）＋ `/security-review`（脆弱性）
   - 検証コマンド = `/memory`・`/context`・`/status`・`/doctor`・`/skills`・`/agents`・`/plugin`
 
 ## スコープ外（層3）

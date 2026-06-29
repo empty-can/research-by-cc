@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-payload.sh — 配布する共有ペイロード <Share> を公開前に機械チェックする（手順書 §6）
+# check-assets.sh — 配布する共有ペイロード <Share> を公開前に機械チェックする（手順書 §6）
 #
 # 「6. 落とし穴チェックリスト」のうちスクリプトで検査可能な項目を自動判定する。
 # 対話 TUI が必要な項目（trust 承認・/memory・/status の確認など）は対象外（手順書 §6 を手で確認）。
@@ -12,7 +12,7 @@
 #   git リポジトリでない（コピー展開した素のディレクトリ）なら、実在＝FAIL にフォールバックする
 #   （ディレクトリごとコピーされるため実在がそのまま配布になる）。
 #
-# 使い方:  ./check-payload.sh <Share-path>
+# 使い方:  ./check-assets.sh <Share-path>
 # 終了コード: FAIL が1件以上で 1、なければ 0（CI 利用可）。
 set -uo pipefail
 
@@ -51,7 +51,7 @@ check_personal(){
   fi
 }
 
-echo "[check-payload] 対象: $SHARE（$([[ $IS_GIT -eq 1 ]] && echo 'git リポジトリ: 追跡基準' || echo '非 git: 実在基準')）"
+echo "[check-assets] 対象: $SHARE（$([[ $IS_GIT -eq 1 ]] && echo 'git リポジトリ: 追跡基準' || echo '非 git: 実在基準')）"
 
 # 1. 個人ファイル CLAUDE.local.md（--add-dir+env で参照側へ漏れる）
 check_personal "CLAUDE.local.md"        "CLAUDE.local.md"
@@ -99,8 +99,8 @@ if [[ $IS_GIT -eq 1 ]] && is_tracked "CLAUDE.md"; then
 fi
 
 if [[ $fail -eq 0 ]]; then
-  echo "[check-payload] 結果: 重大な問題なし（FAIL=0）"
+  echo "[check-assets] 結果: 重大な問題なし（FAIL=0）"
 else
-  echo "[check-payload] 結果: FAIL あり。上記を修正してください"
+  echo "[check-assets] 結果: FAIL あり。上記を修正してください"
 fi
 exit $fail

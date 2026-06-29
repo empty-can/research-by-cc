@@ -21,7 +21,7 @@ flowchart TD
     A --> Verify["③ ロード・適用を検証<br/>/memory /context /status /doctor /skills /agents"]
     B --> Verify
     Verify --> Clean["④ クリーン隔離テスト<br/>CLAUDE_CONFIG_DIR=空dir ＋ .claude 無しの dir から起動"]
-    Clean --> Gate["⑤ 公開前の必須チェック<br/>check-payload（衛生）＋ /security-review（脆弱性・read-only）"]
+    Clean --> Gate["⑤ 公開前の必須チェック<br/>check-assets（衛生）＋ /security-review（脆弱性・read-only）"]
     Gate -->|配布| Pub["&lt;Share&gt; を push<br/>v1.2 案A（テンプレ/clone＋起動オプション）／案D（managed settings）"]
 ```
 
@@ -198,14 +198,14 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 
 `<Share>` を公開（push）する前に、**衛生**と**脆弱性**の両方を必ず通す。役割が別なので**両方とも必須**——`/security-review` は read-only で空振りでも弊害が無いため、「コードが無いから省く」判断をせず**常に実行**して実行漏れを防ぐ。
 
-**(1) `check-payload`（衛生・シェル/CI）** — 個人ファイル混入・無視されるキー・JSON 不正が無いか:
+**(1) `check-assets`（衛生・シェル/CI）** — 個人ファイル混入・無視されるキー・JSON 不正が無いか:
 
 ```bash
-./scripts/check-payload.sh <Share>          # bash（FAIL で exit 1・CI 可）
+./scripts/check-assets.sh <Share>          # bash（FAIL で exit 1・CI 可）
 ```
 
 ```powershell
-.\scripts\check-payload.ps1 -Share <Share>  # PowerShell
+.\scripts\check-assets.ps1 -Share <Share>  # PowerShell
 ```
 
 **(2) `/security-review`（脆弱性・Claude セッション内）** — 同梱スクリプト・hooks 等のコード脆弱性を読み取り専用でレビュー。`<Share>` を更新するブランチで:
@@ -215,12 +215,12 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 ```
 
 - **read-only・空振り無害**: コードを含まない資産に走らせても findings ゼロで終わるだけ（破壊的変更なし／コストは小さなトークン・時間のみ）。
-- **check-payload と補完関係**（衛生 vs 脆弱性）。両者＋人手レビューで多層化。
-- 注: `check-payload` はシェル/CI で回せるが、`/security-review` は**セッション内スラッシュコマンド**。CI で脆弱性側も自動化するなら headless 実行や専用の security-review 手段を別途用意する。
+- **check-assets と補完関係**（衛生 vs 脆弱性）。両者＋人手レビューで多層化。
+- 注: `check-assets` はシェル/CI で回せるが、`/security-review` は**セッション内スラッシュコマンド**。CI で脆弱性側も自動化するなら headless 実行や専用の security-review 手段を別途用意する。
 
 ### 6.2 落とし穴チェックリスト
 
-「commit したのに効かない」を生む仕様。テスト前に確認する。先頭の **🛠 はスクリプト（check-payload）で自動判定できる項目／🧑 は人手で確認する項目**。個人ファイル系の 🛠 は、`<Share>` が git リポジトリなら **Git 追跡されているか**で判定する（**追跡＝FAIL**＝clone に含まれ漏れる／**未追跡で実在＝WARN**＝gitignore 済みで配布はされないが掃除推奨／不在＝PASS）。非 git の素ディレクトリでは実在＝FAIL にフォールバックする。
+「commit したのに効かない」を生む仕様。テスト前に確認する。先頭の **🛠 はスクリプト（check-assets）で自動判定できる項目／🧑 は人手で確認する項目**。個人ファイル系の 🛠 は、`<Share>` が git リポジトリなら **Git 追跡されているか**で判定する（**追跡＝FAIL**＝clone に含まれ漏れる／**未追跡で実在＝WARN**＝gitignore 済みで配布はされないが掃除推奨／不在＝PASS）。非 git の素ディレクトリでは実在＝FAIL にフォールバックする。
 
 - [ ] 🧑 **trust 承認後**にテストしているか（clone/テンプレ展開直後は未承認でフル有効化されない。`autoMemoryDirectory`・`extraKnownMarketplaces` の install prompt は trust 後）
 - [ ] 🛠 **project/local では無視される security キー**を repo に書いていないか（効かない・スクリプトは WARN で検出）:
@@ -256,5 +256,5 @@ managed settings で配る場合の確認（詳細は v1.2 案D・本タスク�
 - **v1.4（2026-06-29）**: 公式 docs 最新版（v2.1.195 相当・2026-06-28 スナップショット）への陳腐化照合を実施。`settings.local.json` も `enabledPlugins`/`extraKnownMarketplaces` の2キーに限り `settings.json` 同様 `--add-dir` で読まれる事実（docs「Additional directories」表）に合わせ、§3 結合早見表・【禁止・非推奨】注記・§6.2 チェックリストの「`settings.local.json` は `--add-dir` でも読まれない」を精密化（2キー例外を明記）。共有用途に使わない実務指針自体は不変。
 - **v1.3（2026-06-22）**: item3 残検証 C7/C12 の実機観測を反映。§5 クリーン隔離に **`--debug-file` の設定ロードログによる隔離成立の実証**（watch=空 config のみ・managed 残存・auth 非継承で再ログイン要）と「`--debug-file` は `/status` を補完する非対話の権威ある証跡」注記を追加。§6.2 落とし穴に **`defaultMode:"auto"` 無視の実観測 WARN** と付与可能スコープ＝policy/user/flag（`--settings` でも付与可）の精密化を追加。
 - **v1.2（2026-06-22）**: subagents×`--add-dir` の CLI バージョン依存（**v2.1.178+ で対応・v2.1.165 までは不可**）を §2 結合表に反映（v1.2 報告書 errata と整合）。
-- **v1.1（2026-06-22）**: `check-payload`（`scripts/`・bash/PowerShell）を **Git 追跡基準**へ改修（追跡＝FAIL／未追跡で実在＝WARN／不在＝PASS・非 git の素ディレクトリのみ実在＝FAIL）し、共有共通ルールの所在期待を `.claude/CLAUDE.md`（案1）へ変更（ルート `CLAUDE.md` が追跡されている場合は `--add-dir`＋env 漏れを WARN）。§6.2 イントロに個人ファイル系 🛠 の追跡基準判定を明記。`base-dev-kit-for-cc` を実 `<Share>` として整備した実地検証（両版 FAIL=0）に基づく改修。
-- **v1.0（2026-06-21）**: 初版。[調査結果報告書 v1.0](./Marketplace外資産の開発・テスト_調査結果.md) を実務手順に落とし込み（ネイティブ起動・結合3経路・検証コマンド・クリーン隔離・落とし穴・層3 注記）。レビュー反映として §0 に推奨リポジトリ構成（`<Dev>`/`<Other>`/`<Share>`・案1 共有ペイロード＋README 隔離・共有境界の鉄則）、§3 に `--add-dir` の正確な memory ロード範囲、§6 に `CLAUDE.local.md` 漏れ・共有境界の落とし穴を追加。`settings.local.json` 非共有（共有は `settings.json`・マシン全リポの個人既定は `~/.claude/settings.json`）を §3・§6 に追記。本文の用語を §0 図の **`<Dev>`/`<Other>`/`<Share>`** に統一（「config リポ」「`<D>`」「`<W>`」を一掃）。クリーン隔離テスト環境作成スクリプトと落とし穴機械チェックスクリプト（bash/PowerShell 各2本）を `scripts/` に追加し §5・§6 から参照。レビュー反映: §2 を「ロード/発火スモーク」と位置づけ §3（方法B）を**正式機能検証の本命**に再フレーム、§3 の引用を【挙動・仕様】【注意】【禁止・非推奨】に再分類、§5 に `<Other>/.claude` 混入と同名衝突の非検知（`/memory` 等で目視）を追記しスクリプト実行例を手動と同格に併記・「バイセクト」→「二分探索」、§6 チェックリスト各項目に 🛠（スクリプト自動）/🧑（人手）を付与しスクリプト実行例を格上げ。§0 の全体像図を ASCII から **mermaid（GitHub ネイティブ描画）** に変更。§6 に「公開前の必須2コマンド」（`check-payload`＝衛生／`/security-review`＝脆弱性・read-only で空振り無害ゆえ常時実行）を新設し、mermaid に公開前ゲート（⑤）ノードを追加。
+- **v1.1（2026-06-22）**: `check-assets`（`scripts/`・bash/PowerShell）を **Git 追跡基準**へ改修（追跡＝FAIL／未追跡で実在＝WARN／不在＝PASS・非 git の素ディレクトリのみ実在＝FAIL）し、共有共通ルールの所在期待を `.claude/CLAUDE.md`（案1）へ変更（ルート `CLAUDE.md` が追跡されている場合は `--add-dir`＋env 漏れを WARN）。§6.2 イントロに個人ファイル系 🛠 の追跡基準判定を明記。`base-dev-kit-for-cc` を実 `<Share>` として整備した実地検証（両版 FAIL=0）に基づく改修。
+- **v1.0（2026-06-21）**: 初版。[調査結果報告書 v1.0](./Marketplace外資産の開発・テスト_調査結果.md) を実務手順に落とし込み（ネイティブ起動・結合3経路・検証コマンド・クリーン隔離・落とし穴・層3 注記）。レビュー反映として §0 に推奨リポジトリ構成（`<Dev>`/`<Other>`/`<Share>`・案1 共有ペイロード＋README 隔離・共有境界の鉄則）、§3 に `--add-dir` の正確な memory ロード範囲、§6 に `CLAUDE.local.md` 漏れ・共有境界の落とし穴を追加。`settings.local.json` 非共有（共有は `settings.json`・マシン全リポの個人既定は `~/.claude/settings.json`）を §3・§6 に追記。本文の用語を §0 図の **`<Dev>`/`<Other>`/`<Share>`** に統一（「config リポ」「`<D>`」「`<W>`」を一掃）。クリーン隔離テスト環境作成スクリプトと落とし穴機械チェックスクリプト（bash/PowerShell 各2本）を `scripts/` に追加し §5・§6 から参照。レビュー反映: §2 を「ロード/発火スモーク」と位置づけ §3（方法B）を**正式機能検証の本命**に再フレーム、§3 の引用を【挙動・仕様】【注意】【禁止・非推奨】に再分類、§5 に `<Other>/.claude` 混入と同名衝突の非検知（`/memory` 等で目視）を追記しスクリプト実行例を手動と同格に併記・「バイセクト」→「二分探索」、§6 チェックリスト各項目に 🛠（スクリプト自動）/🧑（人手）を付与しスクリプト実行例を格上げ。§0 の全体像図を ASCII から **mermaid（GitHub ネイティブ描画）** に変更。§6 に「公開前の必須2コマンド」（`check-assets`＝衛生／`/security-review`＝脆弱性・read-only で空振り無害ゆえ常時実行）を新設し、mermaid に公開前ゲート（⑤）ノードを追加。
