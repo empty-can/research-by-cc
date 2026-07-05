@@ -22,6 +22,7 @@
 | Marketplace 外資産 開発・テスト手順書 | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産_開発・テスト_手順書.md` |
 | 開発・テスト補助スクリプト（clean-test-env / check-assets / publish-share・bash+PowerShell） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/scripts/` |
 | 実装テンプレート（層1+2・3チャネル構成の雛形） | `reports/03.実装テンプレート（層1+2）/`（README ＋ `layer1-repo-template/` ＋ `layer2-plugin/`） |
+| ランチャースクリプト構成設計・実装計画 | `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（実体スクリプトは C-BDK が正本・PR #2） |
 | 公開 README（GitHub 閲覧者向け・CLAUDE.md 派生） | `README.md` |
 
 > 各成果物の版は各ファイル末尾の変更履歴を参照（索引には版番号を持たせない）。
@@ -52,3 +53,5 @@
 - [x] 公開 `README.md` 作成（CLAUDE.md からの派生・GitHub 閲覧者向け・コミット済 d3c766d）
 - [x] 成果物群の公式 docs 最新版（v2.1.195・2026-06-28）照合と横断整合性レビュー（2026-06-29・各5観点 SubAgent 並列）→ テンプレ/手順書/調査結果/v1.2/索引の陳腐化・不整合を修正（settings.local.json 2キー例外の伝播・subagents 版境界の統一・`<D>`→`<Share>`・`sub-agents`→`subagents`・MCP ポリシー一本化・テンプレ誤誘導の是正 等）
 - [x] `--add-dir` 例外ロード表の**正本一元化**（J1・2026-06-29）→ v1.2 付録B に「`--add-dir` 例外ロード一覧（正本）」を新設（anchor `adddir-exceptions`）。01編§4・02編§2・02手順書§3 の早見表は本表を正本とする参照注記へ寄せ、版依存事実の片側更新漏れ（F1/F2 で顕在化）を構造的に抑止
+- [x] 全マシン横断の配布可能資産インベントリ・Plugin配布可否分類・リポジトリ割当計画・全ブランチ横断資産マップ（2026-06-30、tmp/asset-inventory ブランチ）→ `reports/04.資産インベントリ・統合/`
+- [x] ランチャースクリプト実装（env・起動オプションの4分類判定木、sh/ps1両対応・UTF-8 BOM+CRLF、exhaustive オプションテンプレ）→ `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（2026-07-05）。実体スクリプトは C-BDK（`base-dev-kit-for-cc`）が正本、PR #2（base=develop）で提出済み・マージ判断待ち
