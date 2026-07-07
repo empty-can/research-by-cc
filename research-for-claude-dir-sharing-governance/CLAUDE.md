@@ -22,7 +22,7 @@
 | Marketplace 外資産 開発・テスト手順書 | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産_開発・テスト_手順書.md` |
 | 開発・テスト補助スクリプト（clean-test-env / check-assets / publish-share・bash+PowerShell） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/scripts/` |
 | 実装テンプレート（層1+2・3チャネル構成の雛形） | `reports/03.実装テンプレート（層1+2）/`（README ＋ `layer1-repo-template/` ＋ `layer2-plugin/`） |
-| ランチャースクリプト構成設計・実装計画 | `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（実体スクリプトは C-BDK が正本・PR #2） |
+| ランチャースクリプト構成設計・実装計画・レビュー | `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（**実体スクリプトおよび設計書2点は C-BDK `docs/launcher/` が正本**・PR #2。本フォルダの設計書2点はスナップショット。Fable クロスレビュー統合＋レーンA 設計確定書を同梱） |
 | 公開 README（GitHub 閲覧者向け・CLAUDE.md 派生） | `README.md` |
 
 > 各成果物の版は各ファイル末尾の変更履歴を参照（索引には版番号を持たせない）。
