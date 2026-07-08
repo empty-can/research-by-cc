@@ -1,0 +1,6 @@
+リンク先URL,DLファイル名,DL先フォルダ,上書きフラグ
+https://code.claude.com/docs/llms.txt,llms.txt,./code.claude.com/docs,TRUE
+https://code.claude.com/docs/llms-full.txt,llms-full.txt,./code.claude.com/docs,TRUE
+https://code.claude.com/docs/en/claude_code_docs_map.md,claude_code_docs_map.md,./code.claude.com/en,TRUE
+https://modelcontextprotocol.io/llms.txt,llms.txt,./modelcontextprotocol.io,TRUE
+https://modelcontextprotocol.io/llms-full.txt,llms-full.txt,./modelcontextprotocol.io,TRUE
