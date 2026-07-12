@@ -31,22 +31,32 @@
 
 > **【レーンB 実装時の補正・2026-07-12】上記3行だけでは配布先で回帰が出るため拡張した。**
 > publish-share は keep-list で C-BDC の既存 `.gitignore` を残すが、**その直後の `cp -R "$tmp/.claude/." "$SHARE_BODY/"` が payload 版で上書きする**。C-BDC の現行 `.gitignore` は `settings.local.json` / `CLAUDE.local.md`（＋ `**/` 版）の4行を持っており、上記3行だけを置くと**配布のたびに個人設定の除外が失われる**。
-> よって `.claude/.gitignore` には「配布先で必要な除外の全量」を持たせる必要がある（**ここに無い行は publish のたびに消える**）。実装では既存4行を保持し、launcher 個人実体3行と作業一時物（`/work/` `/workspace/` `/agent-memory-local/`）を追加した。
-> `/reports/` は CR-2・PR#1 の担当領域のため本ファイルには入れていない（既追跡の29件に影響を与えないため）。
+> よって `.claude/.gitignore` には「配布先で必要な除外の全量」を持たせる必要がある（**ここに無い行は publish のたびに消える**）。実装では既存4行を保持し、launcher 個人実体3行と成果物クラスを追加した。
 > 検証: 旧 `.gitignore` の全パターンが新 `.gitignore` に包含されることを差分照合で確認済み（回帰ゼロ）。
+
+> **【Round 2 / Round 3 での更新・2026-07-12】**
+> - **`/reports/` と `/plans/` も本ファイルに入れた**（R2-IM-6 / R2-IM-5）。当初「`/reports/` は CR-2・PR#1 の担当領域だから入れない」としたのは**判断の誤り**。C-BDC は submodule として**利用先の `.claude/`** になるため、**利用者が配布先で作った** reports / plans が `git add -A` 一発で public リポへ混入する経路が残っていた。「開発リポの成果物を配らない（追跡解除）」と「配布先で生まれる成果物を公開しない（gitignore）」は**独立した問題**である。
+> - 現在の内容は **成果物クラス 6 種**（`/reports/` `/plans/` `/work/` `/workspace/` `/agent-memory-local/` `work_instructions.txt`）＋ 個人設定 4 行 ＋ launcher 個人実体 3 行。**正本は `check-assets` の 2-c 配列**であり、root と `.claude/` 双方の `.gitignore` はこれに追随させる（三者一致を機械照合で確認済み）。
+> - なお grooming 対象の reports は **33 件**（develop 基準）。旧記述の「29 件」は feat ブランチ時点の数で**誤り**。
 
 **`.claude/.gitattributes`（新規）**:
 ```gitattributes
-# ランチャー資産の改行コード固定（配布先 C-BDC の clone で core.autocrlf に破壊されないため）
+# 既定を「全ファイル LF」に倒し、CRLF が要る launcher/*.ps1 だけを後勝ちで例外にする
+* text=auto eol=lf
+
+/launcher/*.ps1               text eol=crlf
+/launcher/*.ps1.template      text eol=crlf
 /launcher/*.sh                text eol=lf
 /launcher/*.sh.template       text eol=lf
 /launcher/custom.env.template text eol=lf
-/launcher/*.ps1               text eol=crlf
-/launcher/*.ps1.template      text eol=crlf
 ```
 
-- publish-share L51-54 は keep-list（`.git`/`.gitignore`/`README.md`/`LICENSE`）を残し他を rm→`cp -R`。`.claude/.gitignore` は cp で C-BDC ルート `.gitignore` を payload 版へ**収束**（keep-list の既存を上書き）。`.claude/.gitattributes` は keep-list 外だが cp で新規着地。→ 以後 C-BDC の両ファイル正本は C-BDK payload に一元化。
-- C-BDK ルートの既存 `.gitignore`/`.gitattributes`（launcher 行）は**二重防御として残置可**（C-BDK リポ内でも有効）。
+> **【Round 3 での更新・2026-07-12】** 先頭の `* text=auto eol=lf` は **R3-B で追加**した。当初のパス列挙方式（`/launcher/*` だけを指定）では、**skills 同梱の `.sh` のように後から増えた配布物が保護対象から漏れ**、配布先の Windows clone で CRLF 化して壊れる（CR-1 と同じ故障クラスが「指定漏れ」という形で再発芽する）。`text=auto` なのでバイナリは Git が検出して変換しない。R2-S-4 も同時に解決した。
+
+- publish-share のミラーは keep-list（`.git` / `.gitignore` / **`.gitattributes`** / `README.md` / `LICENSE`）を削除から守り、他を rm → `cp -R` する。keep-list は「**削除から守る**」意味であって「payload より優先する」意味ではなく、**直後の cp が payload 版で上書きする**。→ 以後 C-BDC の両ファイルの正本は C-BDK payload に一元化される。
+  （`.gitattributes` の keep-list 追加は R2-IM-7。「payload に無いと配布先から消える」クラスの二重化。）
+- **⚠ `.gitattributes` は「二重防御」にならない**（Round 3 セルフレビュー F1）。`.gitattributes` は**深い階層が勝つ**ため、`.claude/.gitattributes` が存在する限り **C-BDK ルートの `/.claude/**` 行は効かない**（加算ではなく**上書き**）。launcher / skills の改行方針を変えるときは **`.claude/.gitattributes` を直す**こと。ルート側の `/.claude/**` 行は「`.claude/.gitattributes` を持たない ref」のための保険として残す。
+  一方 **`.gitignore` は加算的**なので二重防御が実際に成立する（`.claude/.gitignore` を消しても root だけで個人実体・成果物が守られることを実測確認済み）。**この 2 つは挙動が違う**。
 - **ルート直下物（`start_claude_code.{sh,ps1}`）の eol** は payload に乗らないため、C-BCP ルートへ直コミットする `.gitattributes`（`/start_claude_code.sh text eol=lf`・`/start_claude_code.ps1 text eol=crlf`）で担保（§6 Phase 5a）。
 
 ---

@@ -22,7 +22,9 @@
 | Marketplace 外資産 開発・テスト手順書 | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/Marketplace外資産_開発・テスト_手順書.md` |
 | 開発・テスト補助スクリプト（clean-test-env / check-assets / publish-share・bash+PowerShell） | `reports/02.配布物の開発・テスト/02.Marketplace外資産編/scripts/` |
 | 実装テンプレート（層1+2・3チャネル構成の雛形） | `reports/03.実装テンプレート（層1+2）/`（README ＋ `layer1-repo-template/` ＋ `layer2-plugin/`） |
-| ランチャースクリプト構成設計・実装計画・レビュー | `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（**実体スクリプトおよび設計書2点は C-BDK `docs/launcher/` が正本**・PR #2。本フォルダの設計書2点はスナップショット。Fable クロスレビュー統合＋レーンA 設計確定書を同梱） |
+| ランチャースクリプト構成設計・実装計画 | `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（**実体スクリプトおよび設計書2点は C-BDK `docs/launcher/` が正本**。本フォルダの2点は 2026-07-05 時点の**凍結スナップショット**。⚠ スナップショット本文の「秘匿は custom.env」は撤回済み） |
+| **配布・リリース設計確定（レーンA）** ＝ **リリース工程の正本** | 同上 `配布・リリース設計確定_レーンA.md`（CR-1 搬送方式／CR-2 リリース前提条件／案X／**フェーズ表 Phase 0〜5b**。マージ方式は **merge commit・squash 禁止**） |
+| クロスレビュー報告書（Round 1〜3 ＋ マージ前セルフレビュー） | 同上 `レビュー/`（`Fableクロスレビュー統合_2026-07-07.md`＝PR#2 初回／`_PR1配布キット_`＝PR#1 初回／`_PR1PR2_Round2_`／`_PR1PR2_Round3_`／`横断セルフレビュー_マージ前_`） |
 | 公開 README（GitHub 閲覧者向け・CLAUDE.md 派生） | `README.md` |
 
 > 各成果物の版は各ファイル末尾の変更履歴を参照（索引には版番号を持たせない）。
@@ -54,4 +56,10 @@
 - [x] 成果物群の公式 docs 最新版（v2.1.195・2026-06-28）照合と横断整合性レビュー（2026-06-29・各5観点 SubAgent 並列）→ テンプレ/手順書/調査結果/v1.2/索引の陳腐化・不整合を修正（settings.local.json 2キー例外の伝播・subagents 版境界の統一・`<D>`→`<Share>`・`sub-agents`→`subagents`・MCP ポリシー一本化・テンプレ誤誘導の是正 等）
 - [x] `--add-dir` 例外ロード表の**正本一元化**（J1・2026-06-29）→ v1.2 付録B に「`--add-dir` 例外ロード一覧（正本）」を新設（anchor `adddir-exceptions`）。01編§4・02編§2・02手順書§3 の早見表は本表を正本とする参照注記へ寄せ、版依存事実の片側更新漏れ（F1/F2 で顕在化）を構造的に抑止
 - [x] 全マシン横断の配布可能資産インベントリ・Plugin配布可否分類・リポジトリ割当計画・全ブランチ横断資産マップ（2026-06-30、tmp/asset-inventory ブランチ）→ `reports/04.資産インベントリ・統合/`
-- [x] ランチャースクリプト実装（env・起動オプションの4分類判定木、sh/ps1両対応・UTF-8 BOM+CRLF、exhaustive オプションテンプレ）→ `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（2026-07-05）。実体スクリプトは C-BDK（`base-dev-kit-for-cc`）が正本、PR #2（base=develop）で提出済み・マージ判断待ち
+- [x] ランチャースクリプト実装（env・起動オプションの4分類判定木、sh/ps1両対応・UTF-8 BOM+CRLF、exhaustive オプションテンプレ）→ `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（2026-07-05）。実体スクリプトは C-BDK（`base-dev-kit-for-cc`）が正本、PR #2（base=develop）で提出
+- [x] レーンA（設計確定）→ `配布・リリース設計確定_レーンA.md`（2026-07-07）。CR-1（配布先の統制ファイルを payload に同乗）／**CR-2＝PR #1（grooming）をリリースの前提条件に格上げ**（未 grooming な ref を publish すると内部レポートが公開リポへ流出し、配布先の CLAUDE.md が消える）／案X（root `CLAUDE.md` は開発リポ専用に純化）／リリースフェーズ計画 Phase 0〜5b
+- [x] レーンB（実装）→ C-BDK の 2 本の PR に反映。**PR #1 `chore/groom-as-share`**（配布キットの grooming ＋ `scripts/` の配布ゲート）と **PR #2 `feat/launcher-scripts`**（ランチャー）。**両者は相互依存**（PR#1 の publish-share が PR#2 の CR-1 を有効化し、PR#1 の check-assets が PR#2 の資産を検査する）ため、統合状態で評価する
+- [x] クロスレビュー 3 巡（いずれも **Fable 5 × 3 観点**へ委任。メインは実装者ゆえ第三者たり得ない）→ `レビュー/`。**Round 1**: CRITICAL 4（publish ゲートが機能せず**内部レポートが公開リポへ流出する状態**だった 等）／**Round 2**: CRITICAL 3（**すべて Round 1 の修正が生んだ欠陥**。glob と正規表現の混同・fail-closed の片肺実装・自分の変更で無効になった検証結果の使い回し）／**Round 3**: CRITICAL 0（Round 2 の指摘は全件解消を実測確認。新規は「ゲートが環境依存で fail-open する」クラス）
+- [x] マージ前の資材横断セルフレビュー（2026-07-12）→ `レビュー/横断セルフレビュー_マージ前_2026-07-12.md`。PR 差分でなく**統合後ツリー全量**（46 ファイル / payload 26）を対象。CRITICAL 0 / IMPORTANT 8 / SUGGESTION 4 / 取り下げ 1。**差分に現れない資材が 3 巡の死角だった**（公開配布物へのマシン固有パス混入・誤配置ガードの非対称・README のコピーリスト欠落 等）。全件修正済み
+- [ ] **PR #1 → PR #2 のマージ**（**merge commit・squash 禁止**＝マージ元ブランチの履歴を残すため）← **作業指示者の判断待ち**
+- [ ] マージ後: Phase 3（root `CLAUDE.md` 書き起こし・README 同期・R2-IM-8/9）→ Phase 4（develop→main ＋ tag）→ Phase 5a（C-BCP へ起動装置・雛型を移管）→ Phase 5b（publish 実行・受入検証）
