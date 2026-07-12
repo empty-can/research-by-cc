@@ -29,6 +29,12 @@
 /custom.env
 ```
 
+> **【レーンB 実装時の補正・2026-07-12】上記3行だけでは配布先で回帰が出るため拡張した。**
+> publish-share は keep-list で C-BDC の既存 `.gitignore` を残すが、**その直後の `cp -R "$tmp/.claude/." "$SHARE_BODY/"` が payload 版で上書きする**。C-BDC の現行 `.gitignore` は `settings.local.json` / `CLAUDE.local.md`（＋ `**/` 版）の4行を持っており、上記3行だけを置くと**配布のたびに個人設定の除外が失われる**。
+> よって `.claude/.gitignore` には「配布先で必要な除外の全量」を持たせる必要がある（**ここに無い行は publish のたびに消える**）。実装では既存4行を保持し、launcher 個人実体3行と作業一時物（`/work/` `/workspace/` `/agent-memory-local/`）を追加した。
+> `/reports/` は CR-2・PR#1 の担当領域のため本ファイルには入れていない（既追跡の29件に影響を与えないため）。
+> 検証: 旧 `.gitignore` の全パターンが新 `.gitignore` に包含されることを差分照合で確認済み（回帰ゼロ）。
+
 **`.claude/.gitattributes`（新規）**:
 ```gitattributes
 # ランチャー資産の改行コード固定（配布先 C-BDC の clone で core.autocrlf に破壊されないため）
@@ -107,6 +113,12 @@
 
 **確定（2026-07-07・作業指示者判断）: 案X を採用**。C-BDK root `CLAUDE.md` は「開発リポ専用文書」に純化する ―― 「新規プロジェクトにコピーして使う」雛型宣言を撤去し、§ディレクトリ構造・配布対象/開発専用・開発フロー・C-BDK 固有情報（マシン固有パス・固有 MCP ポリシー）に徹する。エンドユーザ向け雛型役は **C-BCP に一本化**。§4 の §ディレクトリ構造改訂は本方針で確定（Phase 3・レーンB 実装）。
 
+> **【レーンB 着手時の実測・2026-07-12】案X の実装には工程が 1 つ足りない。**
+> - **chore/groom-as-share は既に root `CLAUDE.md` を `CLAUDE.md.example`（コピー展開用テンプレート）へリネーム済み**。つまり PR#1 をマージすると develop から root `CLAUDE.md` が消え、雛型役の `CLAUDE.md.example` が残る。§0 の表「root CLAUDE.md: 有」は develop/feat の実態であり、chore では既に別の姿になっている。
+> - 一方 **C-BCP には `CLAUDE.md.sample` が存在しない**（tracked は `.claude`(submodule) / `.gitmodules` / `README.md` の 3 つのみ。README は「`CLAUDE.md.sample` を用意してあれば」と条件付きで書いており未整備）。
+> - よって案X「雛型役は C-BCP に一本化」を成立させるには、**C-BDK の `CLAUDE.md.example` を C-BCP へ `CLAUDE.md.sample` として移管**し、C-BDK 側では削除した上で root `CLAUDE.md` を開発リポ専用文書として書き直す必要がある。移管は Phase 5a（C-BCP ルート直コミットレール）に同梱するのが自然。
+> - **順序制約**: この事情により IM-9/IM-10 は **PR#1 マージ後**でなければ着手できない（先に feat 側で root `CLAUDE.md` を改訂すると、PR#1 のリネーム／削除と衝突する）。Phase 表の「Phase 1 → Phase 3」の順序は正しく、レーンB では Phase 0（機械的修正＋CR-1）までを先行実施した。
+
 > ※この判断は §4 の §ディレクトリ構造 改訂の書き方にのみ影響し、CR-1/CR-2/IM-8 とは独立。
 
 ---
@@ -120,7 +132,7 @@
 | **2** | CR-1 実装（`.claude/.gitignore`・`.claude/.gitattributes` 追加）＋ check-assets 強化（CR-2）を develop へ | 配布先統制ファイルが payload に乗る・check-assets が reports/CLAUDE.md/個人実体を FAIL 判定 | B |
 | **3** | IM-9/10 反映（root CLAUDE.md 役割確定・§ディレクトリ構造改訂・`.env` 記述是正） | root CLAUDE.md が §5 決定どおり・配布共通指示正本が明記 | 設計=A／実行=B |
 | **4** | develop → main 統合 ＋ 版 tag | main が配布 ready（reports 0・CLAUDE.md 有・統制ファイル有）・tag 付与 | B |
-| **5a** | C-BCP ルート配布レール整備（`start_claude_code.{sh,ps1}` ＋ ルート `.gitattributes` を C-BCP 直コミット） | C-BCP に起動装置と改行属性が着地・README mode A コピーリスト更新 | B |
+| **5a** | C-BCP ルート配布レール整備（`start_claude_code.{sh,ps1}` ＋ ルート `.gitattributes` を C-BCP 直コミット）＋ **雛型役の移管**（C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample`・C-BDK 側は削除） | C-BCP に起動装置・改行属性・雛型 CLAUDE.md が着地・README mode A コピーリスト更新 | B |
 | **5b** | 公開: `/security-review` ゲート → publish-share（tag 付き main ref）で C-BDC 反映 → C-BCP submodule bump → **受入検証**（fresh clone `--recurse-submodules` で Git Bash/PowerShell 両起動スモーク・**autocrlf=true マシン**で CR-1 検収） | 3リポ公開・スモーク pass・reports/CLAUDE.md/改行の実配布確認 | B |
 
 - **PR#1・PR#2 の順序**: reports 除去（PR#1）と launcher（PR#2）は独立でコンフリクト最小。どちらを先に develop へ入れてもよいが、**publish は両方＋CR-1/IM-9 が develop→main に揃うまで不可**。
@@ -141,4 +153,4 @@ Phase 0/2/3/5 の実装項目。C-BDK セッション（primary=C-BDK）で実�
 
 ---
 
-変更履歴: 初版（2026-07-07）。Fable クロスレビュー統合の §9 レーンA を受け、CR-1 搬送方式・CR-2 前提条件・IM-8 正本・IM-9 §ディレクトリ構造・リリースフェーズ計画を確定。IM-10（root CLAUDE.md 役割）は案X（開発リポ専用に純化）で作業指示者確定（同日）。
+変更履歴: 初版（2026-07-07）。Fable クロスレビュー統合の §9 レーンA を受け、CR-1 搬送方式・CR-2 前提条件・IM-8 正本・IM-9 §ディレクトリ構造・リリースフェーズ計画を確定。IM-10（root CLAUDE.md 役割）は案X（開発リポ専用に純化）で作業指示者確定（同日）。／**2026-07-12（レーンB 着手時の補正）**: 実装・実測により本書の 2 点を補正 ―― (1) §1 CR-1 の `.claude/.gitignore` は 3 行では不足（publish の `cp -R` が C-BDC の既存 `.gitignore` を上書きするため、既存4行を含む全量を持たせないと個人設定の除外が配布のたびに失われる）。(2) §5 案X の実装には「C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample` の移管」工程が必要（chore は既に root CLAUDE.md を .example 化済み・C-BCP に雛型が未整備）＝ Phase 5a に追加。Phase 0（機械的修正 IM-1〜7/11〜13・S-1〜5 ＋ CR-1）は C-BDK `feat/launcher-scripts` にて実装完了。
