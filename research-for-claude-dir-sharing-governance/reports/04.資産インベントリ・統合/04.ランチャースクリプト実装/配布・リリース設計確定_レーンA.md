@@ -53,7 +53,9 @@
 
 ## 2. CR-2: リリース前提条件【確定】
 
-**確定事項**: **PR#1（chore/groom-as-share → develop・推奨 squash merge）またはその等価 grooming を、リリース（Phase 4 以降）の前提条件に格上げする**。
+**確定事項**: **PR#1（chore/groom-as-share → develop・merge commit）またはその等価 grooming を、リリース（Phase 4 以降）の前提条件に格上げする**。
+
+> **マージ方式は merge commit（squash 禁止）**。squash するとマージ元ブランチの履歴が消え、レビュー報告書・PR コメントが SHA で参照している修正コミット群（`ab6436c` / `20bab61` / `0df64e7` / `debb531` / `16dba53` / `c566685` 等）を develop の履歴から辿れなくなる。初版は「squash 推奨」と記載していたが、作業指示者の確定指示により**撤回**した（2026-07-12）。
 
 **根拠（実測）**: chore/groom-as-share **だけ**が配布 ready ―― (a) `.claude/reports/` が **0 件**（develop/feat は 29 件追跡）、(b) `.claude/CLAUDE.md`（配布共通指示）を**保有**（develop/main/feat は不保有）。この状態を develop に載せずに publish すると:
 - reports 群が C-BDC へ配布される（check-assets は reports を検査せず PASS）。
@@ -127,16 +129,19 @@
 
 | Phase | 内容 | 完了条件 | レーン |
 |---|---|---|---|
-| **0** | PR#2（launcher・feat/launcher-scripts→develop）のレビュー対応。レーンB 機械的修正（IM-1〜7,12,13）を反映 | 作業指示者レビュー完了・機械的修正コミット済み | B（C-BDK） |
-| **1** | grooming をリリース前提としてマージ（PR#1 chore→develop・squash 推奨） | develop に「reports 0 件・`.claude/CLAUDE.md` 有・`.gitignore` の reports 行復活」が載る | 計画=A／実行=B |
-| **2** | CR-1 実装（`.claude/.gitignore`・`.claude/.gitattributes` 追加）＋ check-assets 強化（CR-2）を develop へ | 配布先統制ファイルが payload に乗る・check-assets が reports/CLAUDE.md/個人実体を FAIL 判定 | B |
-| **3** | IM-9/10 反映（root CLAUDE.md 役割確定・§ディレクトリ構造改訂・`.env` 記述是正） | root CLAUDE.md が §5 決定どおり・配布共通指示正本が明記 | 設計=A／実行=B |
+| **0** | PR#2（launcher・feat/launcher-scripts→develop）のレビュー対応。レーンB 機械的修正（R1-IM-1〜7,12,13）を反映 | 作業指示者レビュー完了・機械的修正コミット済み | B（C-BDK） |
+| **0-bis** | **Round 2 / Round 3 クロスレビュー指摘の反映**（両 PR・完了済み） | R2 CR-a/b/c ＋ R3-A〜J のコード・文書修正が両 PR にコミット済み。統合状態を実測再検証済み | B |
+| **1** | grooming をリリース前提としてマージ（**PR#1 chore→develop・merge commit / squash 禁止**） | develop に「reports 0 件・`.claude/CLAUDE.md` 有・`.gitignore` の reports 行復活」が載る | 計画=A／実行=B |
+| **2** | ~~CR-1 実装 ＋ check-assets 強化（CR-2）を develop へ~~ → **両 PR で実装済み**（CR-1＝PR#2 の `.claude/.gitignore`・`.claude/.gitattributes`／CR-2＝PR#1 の check-assets 強化）。本 Phase はマージで自動達成 | 配布先統制ファイルが payload に乗る・check-assets が reports/CLAUDE.md/個人実体/統制ファイル不在を FAIL 判定（**実測確認済み**） | B（完了） |
+| **3** | R1-IM-9/10 反映（root CLAUDE.md 役割確定・§ディレクトリ構造改訂・`.env` 記述是正）＋ **C-BDK README の launcher 同期（R2-IM-11）** ＋ **R2-IM-8**（`clean-test-env.ps1` が呼び出し元セッションに削除済み `CLAUDE_CONFIG_DIR` を残す）＋ **R2-IM-9**（`publish-plugin` へ publish-share の修正 4 点を横展開） | root CLAUDE.md が §5 決定どおり・配布共通指示正本が明記・README に launcher/`start_claude_code.*`/`docs/` が載る・`clean-test-env.ps1` が env を復元・`publish-plugin` が publish-share と対称 | 設計=A／実行=B |
 | **4** | develop → main 統合 ＋ 版 tag | main が配布 ready（reports 0・CLAUDE.md 有・統制ファイル有）・tag 付与 | B |
 | **5a** | C-BCP ルート配布レール整備（`start_claude_code.{sh,ps1}` ＋ ルート `.gitattributes` を C-BCP 直コミット）＋ **雛型役の移管**（C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample`・C-BDK 側は削除） | C-BCP に起動装置・改行属性・雛型 CLAUDE.md が着地・README mode A コピーリスト更新 | B |
-| **5b** | 公開: `/security-review` ゲート → publish-share（tag 付き main ref）で C-BDC 反映 → C-BCP submodule bump → **受入検証**（fresh clone `--recurse-submodules` で Git Bash/PowerShell 両起動スモーク・**autocrlf=true マシン**で CR-1 検収） | 3リポ公開・スモーク pass・reports/CLAUDE.md/改行の実配布確認 | B |
+| **5b** | 公開: `/security-review` ゲート → publish-share（tag 付き main ref）で C-BDC 反映 → C-BCP submodule bump → **受入検証**（fresh clone `--recurse-submodules` で Git Bash/PowerShell 両起動スモーク・**autocrlf=true マシン**で CR-1 検収）。あわせて **C-BDC / C-BCP README の実態同期**（直コミット。C-BDC README は publish-share の keep-list で保護されるため C-BDK からは更新できない＝R2-IM-11 の後段）と **配布版 `.claude/CLAUDE.md` の Skills 表を 6 件へ同期**（R2-S-1 / R3-S-7） | 3リポ公開・スモーク pass・reports/CLAUDE.md/改行の実配布確認・README が実態と一致 | B |
 
-- **PR#1・PR#2 の順序**: reports 除去（PR#1）と launcher（PR#2）は独立でコンフリクト最小。どちらを先に develop へ入れてもよいが、**publish は両方＋CR-1/IM-9 が develop→main に揃うまで不可**。
-- 会話ベースだった旧5手順を本表で置換・ファイル化（IM-2 の「計画をファイル化」を満たす）。
+- **PR#1・PR#2 の順序**: **PR#1 → PR#2 の順、いずれも merge commit（squash 禁止）**。この順・この方式でコンフリクトが発生しないこと、統合ツリーが配布 ready であることは Round 3 レビューで実測済み。**publish は両方が develop→main に揃うまで不可**。
+- 会話ベースだった旧5手順を本表で置換・ファイル化（R1-IM-2 の「計画をファイル化」を満たす）。
+- **積み残しの残り（SUGGESTION 級・Phase 3 以降の任意）**: R3-S-1（`custom.env` の空値が PowerShell では変数を作らない）／R3-S-2（Windows PowerShell 5.1 の CP932 誤読 ―― テンプレに注記済み・恒久策は設計判断）／R2-S-2（`start_claude_code.ps1` の `Write-Error` 自家撞着）。
+- **指摘 ID は巡回ごとに振り直されている**（例: 「IM-8」は Round 1 では「設計書の正本規定」、Round 2 では「clean-test-env の env 残存」）。本表では `R1-` / `R2-` / `R3-` の巡回接頭辞を付けて区別する。
 
 ---
 
@@ -153,4 +158,4 @@ Phase 0/2/3/5 の実装項目。C-BDK セッション（primary=C-BDK）で実�
 
 ---
 
-変更履歴: 初版（2026-07-07）。Fable クロスレビュー統合の §9 レーンA を受け、CR-1 搬送方式・CR-2 前提条件・IM-8 正本・IM-9 §ディレクトリ構造・リリースフェーズ計画を確定。IM-10（root CLAUDE.md 役割）は案X（開発リポ専用に純化）で作業指示者確定（同日）。／**2026-07-12（レーンB 着手時の補正）**: 実装・実測により本書の 2 点を補正 ―― (1) §1 CR-1 の `.claude/.gitignore` は 3 行では不足（publish の `cp -R` が C-BDC の既存 `.gitignore` を上書きするため、既存4行を含む全量を持たせないと個人設定の除外が配布のたびに失われる）。(2) §5 案X の実装には「C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample` の移管」工程が必要（chore は既に root CLAUDE.md を .example 化済み・C-BCP に雛型が未整備）＝ Phase 5a に追加。Phase 0（機械的修正 IM-1〜7/11〜13・S-1〜5 ＋ CR-1）は C-BDK `feat/launcher-scripts` にて実装完了。
+変更履歴: 初版（2026-07-07）。Fable クロスレビュー統合の §9 レーンA を受け、CR-1 搬送方式・CR-2 前提条件・IM-8 正本・IM-9 §ディレクトリ構造・リリースフェーズ計画を確定。IM-10（root CLAUDE.md 役割）は案X（開発リポ専用に純化）で作業指示者確定（同日）。／**2026-07-12（レーンB 着手時の補正）**: 実装・実測により本書の 2 点を補正 ―― (1) §1 CR-1 の `.claude/.gitignore` は 3 行では不足（publish の `cp -R` が C-BDC の既存 `.gitignore` を上書きするため、既存4行を含む全量を持たせないと個人設定の除外が配布のたびに失われる）。(2) §5 案X の実装には「C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample` の移管」工程が必要（chore は既に root CLAUDE.md を .example 化済み・C-BCP に雛型が未整備）＝ Phase 5a に追加。Phase 0（機械的修正 IM-1〜7/11〜13・S-1〜5 ＋ CR-1）は C-BDK `feat/launcher-scripts` にて実装完了。／**2026-07-12（Round 3 レビュー反映）**: (1) **マージ方式を「squash 推奨」から「merge commit（squash 禁止）」へ訂正**（§2・§6 Phase 1・§6 注記の 3 箇所）。squash はマージ元ブランチの履歴を消し、レビュー報告書・PR コメントが SHA で参照する修正コミット群を辿れなくするため、作業指示者の確定指示により撤回した（R3-G）。(2) **Phase 2 の CR-1/CR-2 は両 PR で実装済み**のため完了扱いに変更（R3-H）。(3) **Round 2 の「マージ後・レーンB」送り 8 件を本フェーズ表へ計上**（R2-IM-8/9/11・R2-S-1 を Phase 3 / 5b へ。R3-J＝「フェーズ表に無い約束はレーンB 移管で消える」）。(4) 指摘 ID に巡回接頭辞（`R1-` / `R2-` / `R3-`）を導入（巡回ごとに ID が振り直され「IM-8」が別物を指していたため）。
