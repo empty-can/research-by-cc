@@ -141,9 +141,9 @@
 |---|---|---|---|
 | **0** | PR#2（launcher・feat/launcher-scripts→develop）のレビュー対応。レーンB 機械的修正（R1-IM-1〜7,12,13）を反映 | 作業指示者レビュー完了・機械的修正コミット済み | B（C-BDK） |
 | **0-bis** | **Round 2 / Round 3 クロスレビュー指摘の反映**（両 PR・完了済み） | R2 CR-a/b/c ＋ R3-A〜J のコード・文書修正が両 PR にコミット済み。統合状態を実測再検証済み | B |
-| **1** | grooming をリリース前提としてマージ（**PR#1 chore→develop・merge commit / squash 禁止**） | develop に「reports 0 件・`.claude/CLAUDE.md` 有・`.gitignore` の reports 行復活」が載る | 計画=A／実行=B |
+| **1** | ~~grooming をリリース前提としてマージ~~ → **完了（2026-07-13）**。**PR#1（`400c904`）→ PR#2（`9458ed3`）の順・いずれも merge commit**。統合後 develop を実測: reports 追跡 0／check-assets が作業ツリー・payload とも exit 0・FAIL 0／payload 26 ファイル／`CLAUDE.md`・`.sh`=LF・`.ps1`=CRLF+BOM | 達成済み | 計画=A／実行=B（完了） |
 | **2** | ~~CR-1 実装 ＋ check-assets 強化（CR-2）を develop へ~~ → **両 PR で実装済み**（CR-1＝PR#2 の `.claude/.gitignore`・`.claude/.gitattributes`／CR-2＝PR#1 の check-assets 強化）。本 Phase はマージで自動達成 | 配布先統制ファイルが payload に乗る・check-assets が reports/CLAUDE.md/個人実体/統制ファイル不在を FAIL 判定（**実測確認済み**） | B（完了） |
-| **3** | R1-IM-9/10 反映（root CLAUDE.md 役割確定・§ディレクトリ構造改訂・`.env` 記述是正）＋ **C-BDK README の launcher 同期（R2-IM-11）** ＋ **R2-IM-8**（`clean-test-env.ps1` が呼び出し元セッションに削除済み `CLAUDE_CONFIG_DIR` を残す）＋ **R2-IM-9**（`publish-plugin` へ publish-share の修正 4 点を横展開） | root CLAUDE.md が §5 決定どおり・配布共通指示正本が明記・README に launcher/`start_claude_code.*`/`docs/` が載る・`clean-test-env.ps1` が env を復元・`publish-plugin` が publish-share と対称 | 設計=A／実行=B |
+| **3** | R1-IM-9/10 反映（root CLAUDE.md 役割確定・§ディレクトリ構造改訂・`.env` 記述是正）＋ **C-BDK README の launcher 同期（R2-IM-11）** ＋ **R2-IM-8**（`clean-test-env.ps1` が呼び出し元セッションに削除済み `CLAUDE_CONFIG_DIR` を残す）＋ **R2-IM-9**（`publish-plugin` へ publish-share の修正 4 点を横展開）＋ **Windows ファイル方針の確定反映（§9）** ＋ **改行検証の数値訂正（§10）** | root CLAUDE.md が §5 決定どおり・配布共通指示正本が明記・README に launcher/`start_claude_code.*`/`docs/` が載る・`clean-test-env.ps1` が env を復元・`publish-plugin` が publish-share と対称・§9/§10 の完了条件を満たす | 設計=A／実行=B |
 | **4** | develop → main 統合 ＋ 版 tag | main が配布 ready（reports 0・CLAUDE.md 有・統制ファイル有）・tag 付与 | B |
 | **5a** | C-BCP ルート配布レール整備（`start_claude_code.{sh,ps1}` ＋ ルート `.gitattributes` を C-BCP 直コミット）＋ **雛型役の移管**（C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample`・C-BDK 側は削除） | C-BCP に起動装置・改行属性・雛型 CLAUDE.md が着地・README mode A コピーリスト更新 | B |
 | **5b** | 公開: `/security-review` ゲート → publish-share（tag 付き main ref）で C-BDC 反映 → C-BCP submodule bump → **受入検証**（fresh clone `--recurse-submodules` で Git Bash/PowerShell 両起動スモーク・**autocrlf=true マシン**で CR-1 検収）。あわせて **C-BDC / C-BCP README の実態同期**（直コミット。C-BDC README は publish-share の keep-list で保護されるため C-BDK からは更新できない＝R2-IM-11 の後段）と **配布版 `.claude/CLAUDE.md` の Skills 表を 6 件へ同期**（R2-S-1 / R3-S-7） | 3リポ公開・スモーク pass・reports/CLAUDE.md/改行の実配布確認・README が実態と一致 | B |
@@ -168,4 +168,58 @@ Phase 0/2/3/5 の実装項目。C-BDK セッション（primary=C-BDK）で実�
 
 ---
 
-変更履歴: 初版（2026-07-07）。Fable クロスレビュー統合の §9 レーンA を受け、CR-1 搬送方式・CR-2 前提条件・IM-8 正本・IM-9 §ディレクトリ構造・リリースフェーズ計画を確定。IM-10（root CLAUDE.md 役割）は案X（開発リポ専用に純化）で作業指示者確定（同日）。／**2026-07-12（レーンB 着手時の補正）**: 実装・実測により本書の 2 点を補正 ―― (1) §1 CR-1 の `.claude/.gitignore` は 3 行では不足（publish の `cp -R` が C-BDC の既存 `.gitignore` を上書きするため、既存4行を含む全量を持たせないと個人設定の除外が配布のたびに失われる）。(2) §5 案X の実装には「C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample` の移管」工程が必要（chore は既に root CLAUDE.md を .example 化済み・C-BCP に雛型が未整備）＝ Phase 5a に追加。Phase 0（機械的修正 IM-1〜7/11〜13・S-1〜5 ＋ CR-1）は C-BDK `feat/launcher-scripts` にて実装完了。／**2026-07-12（Round 3 レビュー反映）**: (1) **マージ方式を「squash 推奨」から「merge commit（squash 禁止）」へ訂正**（§2・§6 Phase 1・§6 注記の 3 箇所）。squash はマージ元ブランチの履歴を消し、レビュー報告書・PR コメントが SHA で参照する修正コミット群を辿れなくするため、作業指示者の確定指示により撤回した（R3-G）。(2) **Phase 2 の CR-1/CR-2 は両 PR で実装済み**のため完了扱いに変更（R3-H）。(3) **Round 2 の「マージ後・レーンB」送り 8 件を本フェーズ表へ計上**（R2-IM-8/9/11・R2-S-1 を Phase 3 / 5b へ。R3-J＝「フェーズ表に無い約束はレーンB 移管で消える」）。(4) 指摘 ID に巡回接頭辞（`R1-` / `R2-` / `R3-`）を導入（巡回ごとに ID が振り直され「IM-8」が別物を指していたため）。
+## 9. Windows 向けファイルの保存形式【確定・2026-07-13】
+
+配布 rule `.claude/rules/win-file-encoding.md` は **payload に同乗して全利用先へ配布される**ため射程が広い。現行は `.ps1` / `.bat` / `.cmd` / `.reg` / `.ini` の 5 拡張子を**ひとまとめ**にして「CP932/CRLF へ変換せよ」と指示しているが、**保存形式の正解は拡張子ごとに違う**ことが実測で判明した。以下を確定方針とする。
+
+### 9-1. 原則: 一律 UTF-8。CP932 は `.bat` だけの例外
+
+| 拡張子 | 読み手 | 保存形式 | 根拠（実測） |
+|---|---|---|---|
+| `.ps1` / `.psm1` / `.psd1` | PowerShell | **UTF-8 + BOM + CRLF** | PS 5.1 は BOM 無しを ANSI（CP932）として読む。**PS 7 は既定 UTF-8** なので CP932 ファイルの日本語リテラルが壊れる（`'こんにちは'` の長さが 5 → 8 に化けることを実測）。**5.1 と 7 の両方で正しく読める唯一の形式が UTF-8 + BOM** |
+| `.bat` | cmd.exe | **CP932 + CRLF・BOM なし** | cmd.exe は BOM を読み飛ばさず 1 行目を壊す。`chcp 65001` を先頭に置く回避策は**コンソール表示品質を損なう**ため作業指示者が忌避 → CP932 以外に実用解が無い |
+| `.cmd` | cmd.exe | **使用禁止**（`.bat` に一本化） | `.bat` との差は一部組み込みコマンドの ERRORLEVEL 挙動のみ。一本化して失うものがなく、例外を 1 つに絞れる |
+| `.reg` / `.ini` | regedit / Win32 API | **スコープ外**（Claude に R/W 権限を与えない） | `.env` と同格の扱い。`settings.json` の `permissions.deny` に追加する |
+| `.csv` | Excel | UTF-8 + BOM | Excel は BOM を見て UTF-8 と判定する（参考。キットには現存しない） |
+
+**`.bat` の本文は CP932 で表現できる文字だけに限る**。`⚠`（U+26A0）/ `‼`（U+203C）/ `✓`（U+2713）/ `✗`（U+2717）/ `—`（U+2014）は **CP932 に符号位置が無く**、変換で救えない（既存 `.ps1` 7 本すべてがこれらを含むことを実測）。メッセージ記号は `[!]` / `[OK]` 等の ASCII を使う。
+
+### 9-2. `.bat` の R/W 機構: 原本は常に CP932。Claude には UTF-8 の影を見せる
+
+「操作の前後で原本を変換する」方式は採らない。Grep は対象が事前に確定せず、Bash は何に触るか原理的に不明なため、**リポジトリが「本来 CP932 のはずのファイルが UTF-8 になっている」状態を持つ時間帯**ができ、その最中の `git add` / hook 失敗 / ユーザ中断で**壊れたバイト列がコミットされる**（＝ Round 1〜3 で潰し続けた「ゲートが環境依存で fail-open する」クラスの再発）。
+
+代わりに**読みはディスクを書き換えない**という非対称性を使う:
+
+| 経路 | 設計 |
+|---|---|
+| `Read` | PreToolUse で `file_path` を **UTF-8 に変換した一時コピー**へ差し替える（`hookSpecificOutput.updatedInput`）。**原本は不変** |
+| `Edit` / `Write` | 同じく一時コピー上で編集させ、PostToolUse で **CP932 + CRLF へ書き戻す**。原本が変わるのはこの 1 ステップだけ |
+| `Grep` | 変換しない。UTF-8 で標準出力へ流すヘルパー `bat-grep` を用意し rule で誘導（ディスクを触らないので無害） |
+| `Bash` | 変換しない。rule で「`.bat` を `sed -i` / リダイレクトで書き換えない・読むなら `bat-cat`」と規定 |
+
+- **コーデックは `cp932` を指定する**（`shift_jis` ではない）。`shift_jis` だと 0x5C が U+00A5〈¥〉に写るが、`cp932` は 0x5C ↔ U+005C〈バックスラッシュ〉で正しく往復する。プロンプト上で `¥` に見えるのはフォントの表示であってエンコーディングではない。
+- **書き戻しは fail-closed**。CP932 に写せない文字が 1 つでもあれば書き戻しを中止し、原本を保全したまま PostToolUse の `decision: "block"` ＋ `reason` で Claude へ差し戻す（`?` 置換で黙って通すと壊れたファイルが配布される）。
+- **実装前に実測する分岐**: PreToolUse の `updatedInput` で `Read` の `file_path` を差し替えられるかは公式 docs に明記が無く**未確認**。効かない場合は「`.bat` に対する Read/Edit/Write を rule で禁止し、専用ヘルパー（`bat-read` / `bat-edit`）へ一本化する」設計に切り替える。
+
+### 9-3. 併せて実施
+
+- **`.gitattributes` を拡張子ベースへ一般化**する（現行はパス個別指定のため、将来増えるファイルが保護から漏れる）。`*.ps1` / `*.bat` を明示登録。
+- **`.ps1` の BOM + CRLF 保全を検査する PostToolUse hook** を入れる。公式 changelog に **v2.1.77「Write tool が CRLF ファイルを上書きする際に黙って改行コードを変換していた」／ v2.1.89「Edit/Write tool が Windows で CRLF を二重化していた」**の修正記録があり、**改行の保全は仕様として保証されておらず回帰しうる**（ファイル操作ツールの改行・文字コードの扱いを規定した記述は公式 docs に一切ない）。検査を機械化して回帰を検知する。
+
+## 10. 改行検証の計測手段の誤り【2026-07-13 発覚・要訂正】
+
+**Round 3 の改行検証で使った計測コマンドが壊れていた**。Git Bash 上では:
+
+- **`grep -c $'\r' <file>` は CR を数えない**。パターンが空文字列に落ちて**全行にマッチ**するため、返る値は CR 行数ではなく**総行数**（`.claude/CLAUDE.md` は 50 行 → grep も 50 を返す）。
+- **`awk '/\r$/'` も MSYS 版は CR を捨てて 0 を返す**（逆方向に間違える）。
+- **正しい計測は `tr -cd '\r' | wc -c`（バイト単位）または `git ls-files --eol`**。
+
+したがって Round 3 報告書・両 PR 本文に掲げた「`CLAUDE.md` の CR 50 → 0」「`settings.json` の CR 39 → 0」「`launcher/*.ps1` は CR 101 のまま」等の**数値は無効**（実体は行数）。**結論そのもの（`.sh`=LF / `.ps1`=CRLF+BOM）は 2026-07-13 に `tr` と `git ls-files --eol` で独立に再測定し、正しいことを確認済み**。
+
+**Phase 3 での対応**: (1) 上記数値を全て訂正する（Round 3 報告書・確定書・マージ済み PR#1/#2 の本文）。(2) 「Git Bash では `grep $'\r'` / `awk '/\r$/'` を CR 検出に使ってはならない」を rule 化する。
+
+> **教訓**: これは「機構は直すが、それを説明する文書を置き去りにする」（Round 3 の教訓）の親戚で、型としては**「結論は合っていたが、根拠として掲げた測り方が壊れていた」**。検証の道具そのものを検証していなかった。
+
+---
+
+変更履歴: 初版（2026-07-07）。Fable クロスレビュー統合の §9 レーンA を受け、CR-1 搬送方式・CR-2 前提条件・IM-8 正本・IM-9 §ディレクトリ構造・リリースフェーズ計画を確定。IM-10（root CLAUDE.md 役割）は案X（開発リポ専用に純化）で作業指示者確定（同日）。／**2026-07-12（レーンB 着手時の補正）**: 実装・実測により本書の 2 点を補正 ―― (1) §1 CR-1 の `.claude/.gitignore` は 3 行では不足（publish の `cp -R` が C-BDC の既存 `.gitignore` を上書きするため、既存4行を含む全量を持たせないと個人設定の除外が配布のたびに失われる）。(2) §5 案X の実装には「C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample` の移管」工程が必要（chore は既に root CLAUDE.md を .example 化済み・C-BCP に雛型が未整備）＝ Phase 5a に追加。Phase 0（機械的修正 IM-1〜7/11〜13・S-1〜5 ＋ CR-1）は C-BDK `feat/launcher-scripts` にて実装完了。／**2026-07-12（Round 3 レビュー反映）**: (1) **マージ方式を「squash 推奨」から「merge commit（squash 禁止）」へ訂正**（§2・§6 Phase 1・§6 注記の 3 箇所）。squash はマージ元ブランチの履歴を消し、レビュー報告書・PR コメントが SHA で参照する修正コミット群を辿れなくするため、作業指示者の確定指示により撤回した（R3-G）。(2) **Phase 2 の CR-1/CR-2 は両 PR で実装済み**のため完了扱いに変更（R3-H）。(3) **Round 2 の「マージ後・レーンB」送り 8 件を本フェーズ表へ計上**（R2-IM-8/9/11・R2-S-1 を Phase 3 / 5b へ。R3-J＝「フェーズ表に無い約束はレーンB 移管で消える」）。(4) 指摘 ID に巡回接頭辞（`R1-` / `R2-` / `R3-`）を導入（巡回ごとに ID が振り直され「IM-8」が別物を指していたため）。／**2026-07-13（マージ実施・Windows ファイル方針の確定）**: (1) **Phase 1 完了** ―― PR#1（`400c904`）→ PR#2（`9458ed3`）を merge commit でマージし、統合後 develop を実測（reports 0・両層の check-assets が exit 0/FAIL 0・payload 26 ファイル・`.sh`=LF/`.ps1`=CRLF+BOM）。(2) **§9 を新設** ―― Windows 向けファイルの保存形式を「一律 UTF-8、CP932 は `.bat` だけの例外（`.cmd` は使用禁止・`.reg`/`.ini` はスコープ外）」で確定し、`.bat` の R/W 機構を「原本は常に CP932。Claude には UTF-8 の影を見せる（読みはディスクを触らない）」で確定。(3) **§10 を新設** ―― Round 3 の改行検証で使った `grep -c $'\r'` が Git Bash で機能しておらず（全行マッチ＝総行数を返す）、報告書と PR 本文の CR 数値が無効であることを記録。結論は再測定で追認。
