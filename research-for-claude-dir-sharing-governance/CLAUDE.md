@@ -24,7 +24,7 @@
 | 実装テンプレート（層1+2・3チャネル構成の雛形） | `reports/03.実装テンプレート（層1+2）/`（README ＋ `layer1-repo-template/` ＋ `layer2-plugin/`） |
 | ランチャースクリプト構成設計・実装計画 | `reports/04.資産インベントリ・統合/04.ランチャースクリプト実装/`（**実体スクリプトおよび設計書2点は C-BDK `docs/launcher/` が正本**。本フォルダの2点は 2026-07-05 時点の**凍結スナップショット**。⚠ スナップショット本文の「秘匿は custom.env」は撤回済み） |
 | **配布・リリース設計確定（レーンA）** ＝ **リリース工程の正本** | 同上 `配布・リリース設計確定_レーンA.md`（CR-1 搬送方式／CR-2 リリース前提条件／案X／**フェーズ表 Phase 0〜5b**。マージ方式は **merge commit・squash 禁止**） |
-| クロスレビュー報告書（Round 1〜3 ＋ マージ前セルフレビュー） | 同上 `レビュー/`（`Fableクロスレビュー統合_2026-07-07.md`＝PR#2 初回／`_PR1配布キット_`＝PR#1 初回／`_PR1PR2_Round2_`／`_PR1PR2_Round3_`／`横断セルフレビュー_マージ前_`） |
+| クロスレビュー報告書（Round 1〜3 ＋ マージ前セルフレビュー ＋ PR#3） | 同上 `レビュー/`（`Fableクロスレビュー統合_2026-07-07.md`＝PR#2 初回／`_PR1配布キット_`＝PR#1 初回／`_PR1PR2_Round2_`／`_PR1PR2_Round3_`／`横断セルフレビュー_マージ前_`／**`_PR3_2026-07-13.md`**＝Phase 3・種別別 3 レーン） |
 | 公開 README（GitHub 閲覧者向け・CLAUDE.md 派生） | `README.md` |
 
 > 各成果物の版は各ファイル末尾の変更履歴を参照（索引には版番号を持たせない）。
@@ -62,6 +62,7 @@
 - [x] クロスレビュー 3 巡（いずれも **Fable 5 × 3 観点**へ委任。メインは実装者ゆえ第三者たり得ない）→ `レビュー/`。**Round 1**: CRITICAL 4（publish ゲートが機能せず**内部レポートが公開リポへ流出する状態**だった 等）／**Round 2**: CRITICAL 3（**すべて Round 1 の修正が生んだ欠陥**。glob と正規表現の混同・fail-closed の片肺実装・自分の変更で無効になった検証結果の使い回し）／**Round 3**: CRITICAL 0（Round 2 の指摘は全件解消を実測確認。新規は「ゲートが環境依存で fail-open する」クラス）
 - [x] マージ前の資材横断セルフレビュー（2026-07-12）→ `レビュー/横断セルフレビュー_マージ前_2026-07-12.md`。PR 差分でなく**統合後ツリー全量**（46 ファイル / payload 26）を対象。CRITICAL 0 / IMPORTANT 8 / SUGGESTION 4 / 取り下げ 1。**差分に現れない資材が 3 巡の死角だった**（公開配布物へのマシン固有パス混入・誤配置ガードの非対称・README のコピーリスト欠落 等）。全件修正済み
 - [x] **PR #1 → PR #2 のマージ**（2026-07-13・**merge commit**。`400c904`＝PR#1 / `9458ed3`＝PR#2。squash していないため両ブランチの個別コミットを辿れる）。統合後 `develop` を実測 ―― reports 追跡 0 件／check-assets が作業ツリー・payload とも **exit 0 / FAIL 0**／payload 26 ファイル／`CLAUDE.md`・`.sh`＝LF・`.ps1`＝CRLF+BOM
+- [x] **PR#3 の第三者クロスレビュー**（2026-07-13・**Fable 5 × 3 レーン**＝Python hook／シェル・PowerShell／設定・文書。**成果物の種別ごとに担当を分けた**）→ **CRITICAL 4 件**（**素の cp932 環境で fail-closed が fail-open になる**＝開発機の `PYTHONIOENCODING=utf-8` が症状を隠していた／**`.origin` サイドカー経由の任意パス書き込み**で hook 自身が `permissions.deny` の迂回路になっていた／**ミラー段だけ fail-open で壊れた plugin が push される**／**配布 3 文書の「`.ini` は deny で保護」が虚偽**）。**全件修正・修正後に再検証**（`cafb9bc`）。報告書は `レビュー/Fableクロスレビュー統合_PR3_2026-07-13.md`
 - [x] **Phase 3 実装 → PR#3（`feat/phase3-win-file-policy` → develop）を提出**（2026-07-13・**作業指示者のレビュー／マージ待ち**）。Windows ファイル方針の確定（**一律 UTF-8・CP932 は `.bat` だけの例外**。一律 CP932 は PS7 が CP932 を読めず成立しない）／`.bat` の CP932 ガード（**原本は常に CP932・Claude には UTF-8 の影を見せる**・fail-closed 書き戻し・`permissions.deny` を硬いガードに）／`.gitattributes` の拡張子ベース化／`.ps1` の BOM+CRLF 検査 hook（**Write ツールは BOM も CRLF も保持しない**ことを実測）／root `CLAUDE.md` 書き起こし（案X）／R2-IM-8（`clean-test-env.ps1` の env 復元）／R2-IM-9（`publish-plugin` は防御 7 点を**すべて**欠いていた）／改行検証の数値訂正。R2-IM-11 は PR#1 のセルフレビューで完了済みだった
 - [ ] Phase 4（develop→main ＋ tag）→ Phase 5a（C-BCP へ起動装置・雛型を移管）→ Phase 5b（publish 実行・受入検証）
 
