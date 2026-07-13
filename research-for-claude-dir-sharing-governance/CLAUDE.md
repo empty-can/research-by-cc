@@ -61,5 +61,8 @@
 - [x] レーンB（実装）→ C-BDK の 2 本の PR に反映。**PR #1 `chore/groom-as-share`**（配布キットの grooming ＋ `scripts/` の配布ゲート）と **PR #2 `feat/launcher-scripts`**（ランチャー）。**両者は相互依存**（PR#1 の publish-share が PR#2 の CR-1 を有効化し、PR#1 の check-assets が PR#2 の資産を検査する）ため、統合状態で評価する
 - [x] クロスレビュー 3 巡（いずれも **Fable 5 × 3 観点**へ委任。メインは実装者ゆえ第三者たり得ない）→ `レビュー/`。**Round 1**: CRITICAL 4（publish ゲートが機能せず**内部レポートが公開リポへ流出する状態**だった 等）／**Round 2**: CRITICAL 3（**すべて Round 1 の修正が生んだ欠陥**。glob と正規表現の混同・fail-closed の片肺実装・自分の変更で無効になった検証結果の使い回し）／**Round 3**: CRITICAL 0（Round 2 の指摘は全件解消を実測確認。新規は「ゲートが環境依存で fail-open する」クラス）
 - [x] マージ前の資材横断セルフレビュー（2026-07-12）→ `レビュー/横断セルフレビュー_マージ前_2026-07-12.md`。PR 差分でなく**統合後ツリー全量**（46 ファイル / payload 26）を対象。CRITICAL 0 / IMPORTANT 8 / SUGGESTION 4 / 取り下げ 1。**差分に現れない資材が 3 巡の死角だった**（公開配布物へのマシン固有パス混入・誤配置ガードの非対称・README のコピーリスト欠落 等）。全件修正済み
-- [ ] **PR #1 → PR #2 のマージ**（**merge commit・squash 禁止**＝マージ元ブランチの履歴を残すため）← **作業指示者の判断待ち**
-- [ ] マージ後: Phase 3（root `CLAUDE.md` 書き起こし・README 同期・R2-IM-8/9）→ Phase 4（develop→main ＋ tag）→ Phase 5a（C-BCP へ起動装置・雛型を移管）→ Phase 5b（publish 実行・受入検証）
+- [x] **PR #1 → PR #2 のマージ**（2026-07-13・**merge commit**。`400c904`＝PR#1 / `9458ed3`＝PR#2。squash していないため両ブランチの個別コミットを辿れる）。統合後 `develop` を実測 ―― reports 追跡 0 件／check-assets が作業ツリー・payload とも **exit 0 / FAIL 0**／payload 26 ファイル／`CLAUDE.md`・`.sh`＝LF・`.ps1`＝CRLF+BOM
+- [ ] **Phase 3**（マージ後）: Windows ファイル方針の確定反映（`win-file-encoding` rule の書き換え・`.gitattributes` 拡張子ベース化・`.bat` 用ヘルパー＋hook・`.ps1` の BOM/CRLF 検査 hook・`.reg` の deny 追加）／root `CLAUDE.md` 書き起こし（案X）／README 同期（R2-IM-11）／R2-IM-8・R2-IM-9／**改行検証の数値訂正**（下記）
+- [ ] Phase 4（develop→main ＋ tag）→ Phase 5a（C-BCP へ起動装置・雛型を移管）→ Phase 5b（publish 実行・受入検証）
+
+> ⚠ **Round 3 の改行検証で使った計測手段が壊れていた**（2026-07-13 に発覚）。Git Bash では `grep -c $'\r'` がパターンを空文字列に落として**全行にマッチ**するため、返る値は CR 行数ではなく**総行数**。`awk '/\r$/'` も MSYS 版は CR を捨てて 0 を返す。**正しい計測は `tr -cd '\r' | wc -c` または `git ls-files --eol`**。Round 3 報告書・PR 本文の「CR 50 → 0」等の数値は無効（結論＝`.sh`=LF / `.ps1`=CRLF は再測定で正しいと確認済み）。Phase 3 で数値を訂正し、この罠を rule 化する。
