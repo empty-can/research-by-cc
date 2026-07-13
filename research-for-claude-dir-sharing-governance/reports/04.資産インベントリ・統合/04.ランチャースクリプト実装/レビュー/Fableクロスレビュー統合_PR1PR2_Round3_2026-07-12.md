@@ -273,7 +273,7 @@ R2 IM-8（`clean-test-env.ps1` の env 復元）・R2 IM-9（`publish-plugin` �
 | 統合ツリー | reports 追跡 **0 件**・統制ファイル 3 種完備・root `.gitattributes` の scripts 保護 3 行維持 |
 | 統合 working tree の check-assets | **exit 0 / FAIL 0 / WARN 0**（誤検知なし） |
 | R3-A（payload を git リポジトリ配下で検査） | `--payload` 有無を問わず **FAIL 5 / exit 1**（fail-open が閉じた）。bash / PowerShell が 4 象限で完全一致 |
-| R3-B（`autocrlf=true` の clone から archive） | `CLAUDE.md` の CR 50 → **0**、`settings.json` の CR 39 → **0**。`launcher/*.ps1` は **CR 101 のまま**（`eol=crlf` 属性が勝つことを確認） |
+| R3-B（`autocrlf=true` の clone から archive） | ~~`CLAUDE.md` の CR 50 → **0**、`settings.json` の CR 39 → **0**。`launcher/*.ps1` は **CR 101 のまま**~~ **⚠ この数値は無効**（2026-07-13 判明）。Git Bash の `grep` / `awk` は CR を数えられず、`grep -c $'\r'` は**パターンが空になり全行にマッチして総行数**を返す（50 / 39 / 101 はいずれも行数）。実 CR をパターンにすると今度は grep が入力の CR を剥がして **0** を返すため、**別々の壊れ方どうしが「50 → 0」という“修正が効いた”外見を作っていた**。**結論（`.sh`=LF / `.ps1`=CRLF+BOM ／ `eol=crlf` 属性が勝つ）は `tr -cd '\r' \| wc -c` と `git ls-files --eol` で再測定し正しいことを確認済み**。詳細は確定書 §10 |
 | R3-E（symlink 入り ref の publish） | bash / PowerShell とも **exit 1・配布先無傷** |
 | 統合 ref の実 publish（`autocrlf=true` の clone から） | 26 ファイル・reports 0・統制ファイル 3 種が着地 |
 | ゲートの生存（未 grooming な `main` を publish） | **FAIL 5 / exit 1** で遮断・配布先無傷 |

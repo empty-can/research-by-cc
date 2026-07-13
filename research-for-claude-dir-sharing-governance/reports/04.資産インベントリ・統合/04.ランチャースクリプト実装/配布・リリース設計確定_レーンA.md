@@ -144,6 +144,7 @@
 | **1** | ~~grooming をリリース前提としてマージ~~ → **完了（2026-07-13）**。**PR#1（`400c904`）→ PR#2（`9458ed3`）の順・いずれも merge commit**。統合後 develop を実測: reports 追跡 0／check-assets が作業ツリー・payload とも exit 0・FAIL 0／payload 26 ファイル／`CLAUDE.md`・`.sh`=LF・`.ps1`=CRLF+BOM | 達成済み | 計画=A／実行=B（完了） |
 | **2** | ~~CR-1 実装 ＋ check-assets 強化（CR-2）を develop へ~~ → **両 PR で実装済み**（CR-1＝PR#2 の `.claude/.gitignore`・`.claude/.gitattributes`／CR-2＝PR#1 の check-assets 強化）。本 Phase はマージで自動達成 | 配布先統制ファイルが payload に乗る・check-assets が reports/CLAUDE.md/個人実体/統制ファイル不在を FAIL 判定（**実測確認済み**） | B（完了） |
 | **3** | R1-IM-9/10 反映（root CLAUDE.md 役割確定・§ディレクトリ構造改訂・`.env` 記述是正）＋ **C-BDK README の launcher 同期（R2-IM-11）** ＋ **R2-IM-8**（`clean-test-env.ps1` が呼び出し元セッションに削除済み `CLAUDE_CONFIG_DIR` を残す）＋ **R2-IM-9**（`publish-plugin` へ publish-share の修正 4 点を横展開）＋ **Windows ファイル方針の確定反映（§9）** ＋ **改行検証の数値訂正（§10）** | root CLAUDE.md が §5 決定どおり・配布共通指示正本が明記・README に launcher/`start_claude_code.*`/`docs/` が載る・`clean-test-env.ps1` が env を復元・`publish-plugin` が publish-share と対称・§9/§10 の完了条件を満たす | 設計=A／実行=B |
+| **3 の実施状況** | **PR#3（`feat/phase3-win-file-policy` → develop）として提出済み（2026-07-13）**。`5cddd0c`＝Windows ファイル方針＋`.bat` の CP932 ガード（§9）／`6783cea`＝root CLAUDE.md 新設・R2-IM-8・R2-IM-9・`.ps1` 保存形式の検査 hook／`fadd537`＝CR 計測の壊れ方を明記（§10）。R2-IM-11（README の launcher 同期）は PR#1 のセルフレビューで既に完了していた | **作業指示者のレビュー・マージ待ち** | B |
 | **4** | develop → main 統合 ＋ 版 tag | main が配布 ready（reports 0・CLAUDE.md 有・統制ファイル有）・tag 付与 | B |
 | **5a** | C-BCP ルート配布レール整備（`start_claude_code.{sh,ps1}` ＋ ルート `.gitattributes` を C-BCP 直コミット）＋ **雛型役の移管**（C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample`・C-BDK 側は削除） | C-BCP に起動装置・改行属性・雛型 CLAUDE.md が着地・README mode A コピーリスト更新 | B |
 | **5b** | 公開: `/security-review` ゲート → publish-share（tag 付き main ref）で C-BDC 反映 → C-BCP submodule bump → **受入検証**（fresh clone `--recurse-submodules` で Git Bash/PowerShell 両起動スモーク・**autocrlf=true マシン**で CR-1 検収）。あわせて **C-BDC / C-BCP README の実態同期**（直コミット。C-BDC README は publish-share の keep-list で保護されるため C-BDK からは更新できない＝R2-IM-11 の後段）と **配布版 `.claude/CLAUDE.md` の Skills 表を 6 件へ同期**（R2-S-1 / R3-S-7） | 3リポ公開・スモーク pass・reports/CLAUDE.md/改行の実配布確認・README が実態と一致 | B |
@@ -208,17 +209,33 @@ Phase 0/2/3/5 の実装項目。C-BDK セッション（primary=C-BDK）で実�
 
 ## 10. 改行検証の計測手段の誤り【2026-07-13 発覚・要訂正】
 
-**Round 3 の改行検証で使った計測コマンドが壊れていた**。Git Bash 上では:
+**Round 3 の改行検証で使った計測コマンドが壊れていた**。Git Bash（MSYS）の `grep` / `awk` は CR を数えられず、
+しかも**間違い方が 2 通りあって、どちらも“それらしい値”を返す**。真値 CR=2・3 行のファイルで実測:
 
-- **`grep -c $'\r' <file>` は CR を数えない**。パターンが空文字列に落ちて**全行にマッチ**するため、返る値は CR 行数ではなく**総行数**（`.claude/CLAUDE.md` は 50 行 → grep も 50 を返す）。
-- **`awk '/\r$/'` も MSYS 版は CR を捨てて 0 を返す**（逆方向に間違える）。
-- **正しい計測は `tr -cd '\r' | wc -c`（バイト単位）または `git ls-files --eol`**。
+| 書き方 | 返る値 | 何が起きているか |
+|---|---|---|
+| `grep -c $'\r' <file>` | **3**（＝総行数） | パターンが空になり**全行にマッチ**する |
+| `grep -c "$(printf '\r')" <file>` | **0** | grep がテキストモードで**入力の CR を剥がす**ため一致しない |
+| `awk '/\r$/' <file>` | **0** | awk も CR を剥がす |
+| `grep -c -U "$(printf '\r')" <file>` | **2** ✅ | `-U`（バイナリ扱い）なら CR が見える |
+| `tr -cd '\r' < <file> \| wc -c` | **2** ✅ | 正解 |
 
-したがって Round 3 報告書・両 PR 本文に掲げた「`CLAUDE.md` の CR 50 → 0」「`settings.json` の CR 39 → 0」「`launcher/*.ps1` は CR 101 のまま」等の**数値は無効**（実体は行数）。**結論そのもの（`.sh`=LF / `.ps1`=CRLF+BOM）は 2026-07-13 に `tr` と `git ls-files --eol` で独立に再測定し、正しいことを確認済み**。
+**これが最も危険な点**: 「大きい数」と「0」の**両方が誤りになりうる**ため、`before → after` を別の書き方で測ると
+**壊れた計測どうしが「修正が効いた」ように見える**。Round 3 の「`CLAUDE.md` の **CR 50 → 0**」がまさにそれで、
+before は「空パターンで**行数 50**」、after は「CR を剥がされて **0**」という**別々の壊れ方**だった
+（`.claude/CLAUDE.md` はちょうど 50 行）。同様に「`settings.json` の CR 39 → 0」「`launcher/*.ps1` は CR 101 のまま」も
+**行数であって CR 数ではない**。
 
-**Phase 3 での対応**: (1) 上記数値を全て訂正する（Round 3 報告書・確定書・マージ済み PR#1/#2 の本文）。(2) 「Git Bash では `grep $'\r'` / `awk '/\r$/'` を CR 検出に使ってはならない」を rule 化する。
+**結論そのもの（`.sh`=LF / `.ps1`=CRLF+BOM）は 2026-07-13 に `tr -cd '\r' | wc -c` と `git ls-files --eol` で
+独立に再測定し、正しいことを確認済み**（`git ls-files --eol` が `i/lf w/crlf attr/text eol=crlf` を返す）。
 
-> **教訓**: これは「機構は直すが、それを説明する文書を置き去りにする」（Round 3 の教訓）の親戚で、型としては**「結論は合っていたが、根拠として掲げた測り方が壊れていた」**。検証の道具そのものを検証していなかった。
+**Phase 3 での対応**: (1) 上記数値を訂正する（Round 3 報告書・本書・マージ済み PR#1/#2 の本文）。
+(2) 「Git Bash の `grep` / `awk` で CR を数えてはならない」を配布 rule（`win-file-encoding.md`）と
+C-BDK root `CLAUDE.md` に明記する。
+
+> **教訓**: 「機構は直すが、それを説明する文書を置き去りにする」（Round 3 の教訓）の親戚で、型としては
+> **「結論は合っていたが、根拠として掲げた測り方が壊れていた」**。しかも**壊れた計測が before/after の
+> 形をとると、修正の成功を偽証する**。検証の道具そのものを検証していなかった。
 
 ---
 
