@@ -147,7 +147,7 @@
 | **3 の実施状況** | **完了（2026-07-14）**。PR#3（`feat/phase3-win-file-policy` → develop・merge commit **`aac3378`**）。`5cddd0c`＝Windows ファイル方針＋`.bat` の CP932 ガード（§9）／`6783cea`＝root CLAUDE.md 新設・R2-IM-8・R2-IM-9・`.ps1` 保存形式の検査 hook／`fadd537`＝CR 計測の壊れ方を明記（§10）／**`cafb9bc`＝Fable5 × 3 レーンのクロスレビュー指摘を全件反映（CRITICAL 4・IMPORTANT 14・SUGGESTION 13）**。R2-IM-11（README の launcher 同期）は PR#1 のセルフレビューで既に完了していた | 達成済み | B（完了） |
 | **4** | ~~develop → main 統合 ＋ 版 tag~~ → **完了（2026-07-14）**。merge commit **`bb4e2e1`**・annotated tag **`v1.0.0-RC1`**。統合後の main を実測: reports/plans 追跡 0／check-assets が作業ツリー・payload とも **exit 0・FAIL 0**／payload **28 ファイル**／統制ファイル（`.claude/.gitignore`・`.gitattributes`・`CLAUDE.md`・`hooks/`）が全て payload に同乗 | 達成済み | B（完了） |
 | **4 の版数判断** | **`v1.0.0` ではなく `v1.0.0-RC1`**（`v0.9.0` 案から変更）。残作業は Phase 5a（配線）と Phase 5b（publish と受入検証）だけで、**機能は出揃っており、残りは「配線と検収」**。これは RC がまさに表す状態（＝この成果物を 1.0.0 の候補として受入テストにかける）で、昇格の道筋も定義できる ―― **受入検証が通れば Phase 5a 反映後の main に `v1.0.0`、落ちれば直して RC2**。`v0.9.0` は「まだ機能が積み上がっている途中」を示唆して実態と合わず、1.0.0 との関係も宣言しない | — | 作業指示者確定 |
-| **5a** | C-BCP ルート配布レール整備（`start_claude_code.{sh,ps1}` ＋ ルート `.gitattributes` を C-BCP 直コミット）＋ **雛型役の移管**（C-BDK `CLAUDE.md.example` → C-BCP `CLAUDE.md.sample`・C-BDK 側は削除） | C-BCP に起動装置・改行属性・雛型 CLAUDE.md が着地・README mode A コピーリスト更新 | B |
+| **5a** | ~~C-BCP ルート配布レール整備 ＋ 雛型役の移管~~ → **完了（2026-07-14）**。C-BCP `aa8389d`（`start_claude_code.{sh,ps1}`・ルート `.gitattributes`・`CLAUDE.md.sample`・README 更新）／C-BDK `a9692d3`（`CLAUDE.md.example` 削除・README 方法A の張り替え）→ main へ `b4595f1`。**受入検証（autocrlf=true）を先取りで実施済み**: `git clone -c core.autocrlf=true` した C-BCP で `.sh`=0 CR・`.ps1`=CRLF+BOM・`bash -n` OK。**対照実験で `.gitattributes` 導入前のコミットは CR 46 になることを確認**し、「autocrlf=true が本当に効いている」ことを立証した（空証明でないことの担保） | 達成済み | B（完了） |
 | **5b** | 公開: `/security-review` ゲート → **`publish-share --ref v1.0.0-RC1`** で C-BDC 反映 → C-BCP submodule bump → **受入検証**（fresh clone `--recurse-submodules` で Git Bash/PowerShell 両起動スモーク・**autocrlf=true マシン**で CR-1 検収）。あわせて **C-BDC / C-BCP README の実態同期**（直コミット。C-BDC README は publish-share の keep-list で保護されるため C-BDK からは更新できない＝R2-IM-11 の後段）と **配布版 `.claude/CLAUDE.md` の Skills 表を 6 件へ同期**（R2-S-1 / R3-S-7） | 3リポ公開・スモーク pass・reports/CLAUDE.md/改行の実配布確認・README が実態と一致 | B |
 | **6**（新設） | **受入検証の結果に応じた昇格**: pass なら Phase 5a 反映後の main に **`v1.0.0`** を付与、fail なら修正して **RC2** | v1.0.0 タグ付与（または RC2 で 5b へ戻る） | B |
 
@@ -244,6 +244,21 @@ C-BDK root `CLAUDE.md` に明記する。
 > **教訓**: 「機構は直すが、それを説明する文書を置き去りにする」（Round 3 の教訓）の親戚で、型としては
 > **「結論は合っていたが、根拠として掲げた測り方が壊れていた」**。しかも**壊れた計測が before/after の
 > 形をとると、修正の成功を偽証する**。検証の道具そのものを検証していなかった。
+
+### 10-bis. 「守れた」を主張する検査には対照実験を付ける【2026-07-14 追記】
+
+Phase 5a の受入検証（`core.autocrlf=true` の clone で `.sh` が LF のままか）で**同型の罠を踏みかけた**。
+
+- `git -c core.autocrlf=true clone` して `.sh` の CR が 0 だったので「`.gitattributes` が守った」と読める。
+  だが**保護が無くても CR が 0 なら、同じ結果になる**。つまりこの計測は**「守った」と「そもそも脅威が
+  発生していない」を区別できない**。
+- そこで**対照実験**（`.gitattributes` を入れる前のコミットを同じ clone でチェックアウトする）を行ったところ、
+  1 回目は **CR 0**（＝ autocrlf が効いていないように見える）。しかし原因は**対照実験のコマンドの方が
+  壊れていた**（`git checkout` に `-f` が無く、作業ツリーの変更で黙って失敗していた）。`-f` を付けると
+  **CR 46** が出て、`autocrlf=true` が実際に効いていることが確定した。
+- **教訓**: **「壊れなかった」を示す検査は、脅威が実在することを示す対照とセットでなければ空証明**。
+  そして**対照実験そのものも壊れる**（今回は静かに失敗するコマンドだった）。**「期待どおりの値が出た」時ほど、
+  計測系が動いていたかを疑う**。
 
 ---
 
