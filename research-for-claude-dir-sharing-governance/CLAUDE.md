@@ -1,5 +1,7 @@
 # CLAUDE.md — ポータブルな `.claude` チーム共有・統制の調査
 
+> ⚠ **完成版ドキュメントの正本（マスタ）は本フォルダではなく [`cc-relative-info` の `claude-dir-sharing-governance/`](https://github.com/empty-can/cc-relative-info/tree/develop/claude-dir-sharing-governance)** に移管済み（2026-07-20）。本リポジトリ `research-by-cc` は**調査・検討のための作業用ワークスペース**であり、ここに残る `reports/` 配下は移管時点の作業スナップショット。**完成版の更新は正本リポジトリで行う**（二重管理を避ける）。本フォルダで新たな調査を続ける場合も、成果が固まったら正本へ反映する。
+
 > 本フォルダは「ゼロから作ったリポジトリでも使えるポータブルな最小 `.claude/` を、Marketplace のようにチーム共有・統制する仕組み」を調査する個別調査フォルダ。ルート `CLAUDE.md` の規約（成果物配置・命名・Git 運用・Agent 活用・公式ドキュメント調査手順）に従う。
 
 ## 調査の目的・背景
