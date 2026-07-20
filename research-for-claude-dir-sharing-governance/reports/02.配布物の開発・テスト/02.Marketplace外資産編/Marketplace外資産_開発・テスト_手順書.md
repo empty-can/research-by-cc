@@ -1,4 +1,4 @@
-# Marketplace 外資産（CLAUDE.md / rules / settings）開発・テスト手順書（v1.0）
+# Marketplace 外資産（CLAUDE.md / rules / settings）開発・テスト手順書（v1.7）
 
 > - **目的**: Marketplace（層2）で配れない config 資産（`CLAUDE.md` / `.claude/rules/` / `settings.json` / skills / agents）を、config・テンプレートリポジトリで開発・テストする実務手順。全体像・結合手段・ロード検証コマンド・落とし穴を手を動かす順に把握できる。
 > - **位置づけ**: [調査結果報告書](./Marketplace外資産の開発・テスト_調査結果.md) の派生（実務オペレーション版）。根拠・出典は報告書側にあり、本書は手順に絞る。第1フェーズ [Plugin 開発・テスト手順書](../01.Plugin・Marketplace編/Plugin開発・テスト_手順書.md) の config 資産版。
@@ -259,6 +259,15 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 - [ ] 🛠 参照元（`<Share>` 等）に**個人の `CLAUDE.local.md` が残っていないか**（環境変数 ON 時に参照側へ漏れる）
 - [ ] 🛠 `<Share>` に **`settings.local.json` を置いていないか**（project 個人・非共有。例外は `enabledPlugins`/`extraKnownMarketplaces` の2キーのみ `--add-dir` で読まれる点。共有したい設定は `settings.json` に置き `--settings` で渡す）
 - [ ] 🛠 `settings.json` が **valid JSON** か（不正だと `/doctor` でも検出される）
+- [ ] 🛠 **ランチャーの個人実体**（`.claude/custom.env` / `option-settings.sh` / `option-settings.ps1`）を追跡・混入していないか（テンプレから利用者が作る個人ファイル）
+- [ ] 🛠 **内部成果物・作業一時物**（`.claude/reports` / `work` / `workspace` / `plans` / `agent-memory-local` / `work_instructions.txt` / `.bat-shadow`）を混入していないか ―― **内部レポートの公開リポ流出を止める最後の砦（CR-A 対応の中核）**
+- [ ] 🛠 **配布先の統制ファイル**（`.claude/.gitignore` / `.claude/.gitattributes`）が payload に**有る**か（無いと publish のミラーで配布先の除外設定・改行保護が消える。payload では FAIL / 作業ツリーでは WARN）
+- [ ] 🛠 配布物内に**環境固有の絶対パス**（`C:\…` / `/home/…` / `/Users/…`）が無いか（WARN）
+- [ ] 🛠 配布される **`.ps1` がすべて UTF-8 BOM 付き**か（BOM 無しは Windows PowerShell 5.1 で CP932 誤読）
+- [ ] 🛠 **`.claude/CLAUDE.md` が在る**か（案1 構成。共有共通ルールの正本。無いとルート `CLAUDE.md` に共有ルールがある疑いで FAIL）
+- [ ] 🛠 ルート `CLAUDE.md` が Git 追跡されている場合の注意喚起（`--add-dir` + env で参照側にロードされる。リポ固有情報を含めない・WARN）
+
+> 上記の 🛠 は `check-assets`（`.sh`/`.ps1`）が実際に自動判定する項目。**実装は本チェックリストより広い範囲を検査している**ため、迷ったら手動列挙よりスクリプトの出力を正とする。
 
 **🧑 人手で目視確認**
 
@@ -275,7 +284,8 @@ cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean \
 
 **🛠 スクリプト自動判定**
 
-- [ ] 🛠 `<Share.claude>` に**個人ファイル（`settings.local.json`/`CLAUDE.local.md`）を追跡していないか**（`.gitignore`＋`check-assets` で二重防御。publish は追跡ファイルのみミラーするため未追跡なら混入しないが、誤追跡は漏れる）
+- [ ] 🛠 個人ファイル（`settings.local.json`/`CLAUDE.local.md`）が publish payload に混入していないか。**検査は `<Dev>` に対して `check-assets` をかける**（`publish-share` が内部で `git archive <ref> .claude` の実体を `--payload` で検査するのと同じ経路）。publish は追跡ファイルのみミラーするため未追跡なら混入しないが、誤追跡は漏れる。
+  - ⚠ **`<Share.claude>` 自体に直接 `check-assets` をかけてはいけない**。`<Share.claude>` はルート直下が `.claude/` の中身（入れ子の `.claude/` が無い）なので、スクリプトが `<path>/.claude/…` を探して**実在するファイルを「無い」と誤 FAIL/WARN したり、見当違いの場所を見て偽 PASS を返したりする**（実機確認済み：`CLAUDE.md`/`settings.json`/`.gitignore`/`.gitattributes` が実在するのに `.claude/CLAUDE.md が無い` で FAIL）。個人ファイル追跡の検出は `<Dev>` の payload 経路で担保される。
 
 **🧑 人手で目視確認**
 
@@ -328,15 +338,16 @@ flowchart LR
 
 ```bash
 # bash
-./scripts/publish-share.sh  [--ref <ref>] --share <Share.claude のパス>
+./scripts/publish-share.sh  --ref <ref> [--share <Share.claude のパス>]
 # PowerShell
-.\scripts\publish-share.ps1 [-Ref <ref>] -ShareBody <Share.claude のパス>
-# 例: groom 済みブランチを publish
-./scripts/publish-share.sh --ref develop --share /path/to/<Share.claude>
+.\scripts\publish-share.ps1 -Ref <ref> [-ShareBody <Share.claude のパス>]
+# 例: リリースタグを publish
+./scripts/publish-share.sh --ref v1.0.1 --share /path/to/<Share.claude>
 ```
 
-- **ref 指定式**（既定 `main`＝公開基準）。`git archive <ref> .claude` で取り出すため **checkout 不要**で任意 ref を publish できる。
-- **公開前ゲートを内蔵**: `check-assets`（§6.1・**取り出した実体**を検査）→ `/security-review` の手動確認 → 追跡ファイルのみミラー → `<Share.claude>` を commit/push。
+- **`--ref` は必須（既定値なし）**。かつて既定は `main` だったが、未 grooming の ref を無自覚に publish して内部レポートを公開リポへ流出させる事故（CR-A）を招いたため廃止した。省略すると `‼ --ref は必須です` で `exit 2`。一方 **`--share`/`-ShareBody` は既定値あり（省略可）**。`git archive <ref> .claude` で取り出すため **checkout 不要**で任意 ref を publish できる。
+- **公開前ゲートを内蔵**: `check-assets`（§6.1・**取り出した実体**を `--payload` で検査）→ `/security-review` の手動確認 → 追跡ファイルのみミラー → `<Share.claude>` を commit/push。
+  - ⚠ パターンB の `/security-review` は **`<Dev>` の publish 対象 ref（`--ref` に渡す ref）に対して実行する**。publish 時点では `<Share.claude>` にまだその内容が反映されていないため（§6.1 の「`<Share>` を含むリポで開き」は主にパターンA 向けの表現）。`publish-share` は「その ref で `/security-review` 実行済みか」を対話で確認するだけで、レビュー自体は代行しない。
 - **安全弁**: 取り出した `.claude` が空なら中止（`<Share.claude>` を空で上書きしない）。
 - **自動化しない**（session 開始 hook 等に載せない）。公開前ゲートを素通りさせないため、意図的な手動実行に限る。
 - publish 後、`<Share>` で submodule を bump:
@@ -377,6 +388,7 @@ managed settings で配る場合の確認（詳細は v1.2 案D・本タスク�
 
 ## 変更履歴
 
+- **v1.7（2026-07-20）**: Sonnet 動作検証（実スクリプト・実リポとの読み合わせ）で検出した文書と実装の乖離 4 件を反映。**(1) §7.2 の `publish-share` 署名を実装に合わせ訂正** ―― `--ref` は**必須**（既定 `main` は CR-A〔未 grooming ref の誤 publish で内部レポート流出〕を機に廃止済み）、`--share`/`-ShareBody` は**任意**（既定値あり）。旧版は必須/任意が逆だった。**(2) §6.2 パターンB固有の「`<Share.claude>` に直接 `check-assets`」を訂正** ―― `<Share.claude>` はルート直下が `.claude/` の中身で入れ子が無く、直接かけると実在ファイルを誤 FAIL する（実機確認）。検査は `<Dev>` の payload 経路で担保する旨に修正。**(3) §6.2 の 🛠 自動判定項目を実装に追随** ―― ランチャー個人実体・内部成果物混入（CR-A 対応の中核）・統制ファイル不在・環境固有絶対パス・`.ps1` の BOM・`.claude/CLAUDE.md` 所在・ルート `CLAUDE.md` 追跡注意の 7 項目を追記（実装は従来記載の 4 項目より広く検査していた）。**(4) §7.2 に、パターンB の `/security-review` は `<Dev>` の publish 対象 ref に対して実行する旨を補記**。あわせてタイトルの版数表記（v1.0 のまま陳腐化していた）を実体に合わせ更新。
 - **v1.6（2026-06-29）**: 開発ローカルのトポロジを **パターンA（単一 `<Share>`）／パターンB（`.claude` を独立リポ `<Share.claude>` に submodule 分割）** として正式化。§0 に「トポロジの選択」（§1〜§6 は両パターン共通・配布運用のみ §7 で分岐）を追加し、旧「推奨リポジトリ構成」を「パターンA の構成」に改題。全体像図は **① 格納/publish・⑥ 配布をパターンA箱／パターンB箱に分岐**し、テスト手段「方法A/B」とトポロジ「パターンA/B」のラベル衝突も解消。§7 を「配布・同期運用【パターン分岐】」に再編（7.1 A／7.2 B: トポロジ図・ブランチ方針〔develop=テスト基準／main=公開基準〕・publish〔Sync A・`publish-share`・手動ゲート・ref 指定〕・refresh〔Sync B・取得のみ・自動可〕・雛型コピー利用）。§6.2 を **🛠（スクリプト自動）上／🧑（人手目視）下**に並べ替え、**「パターンA/B 共通」「パターンB 固有」の見出し**に再構成（共通分はパターンB でも必須＝固有は上乗せの明示）。パターンB 固有として submodule の落とし穴（未初期化空振り・二重ロード・個人ファイル誤追跡・`.gitmodules` branch）を追加。旧 §7（層3 注記）を §8 へ繰り下げ。`scripts/` に `publish-share.{sh,ps1}` の正本を追加。`<Share>` の役割名を「雛型(配布)リポジトリ」と明確化。
 - **v1.5（2026-06-29）**: 横断整合性レビュー J1 反映。§3 結合早見表に版依存事実の**正本＝[v1.2 付録B『--add-dir 例外ロード一覧（正本）』](../../01.配布・統制方針調査/結論・構成案_ポータブルな.claude共有_v1.2.md#adddir-exceptions)** への参照注記を追加（本表は運用早見）。
 - **v1.4（2026-06-29）**: 公式 docs 最新版（v2.1.195 相当・2026-06-28 スナップショット）への陳腐化照合を実施。`settings.local.json` も `enabledPlugins`/`extraKnownMarketplaces` の2キーに限り `settings.json` 同様 `--add-dir` で読まれる事実（docs「Additional directories」表）に合わせ、§3 結合早見表・【禁止・非推奨】注記・§6.2 チェックリストの「`settings.local.json` は `--add-dir` でも読まれない」を精密化（2キー例外を明記）。共有用途に使わない実務指針自体は不変。
