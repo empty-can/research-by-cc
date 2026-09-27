@@ -21,7 +21,6 @@
       "WebFetch(domain:code.claude.com)",
       "WebFetch(domain:docs.claude.com)",
       "WebFetch(domain:github.com/anthropics)",
-      "Write(research-for-*/**)",
       "Edit(research-for-*/**)",
       "mcp__github__search_repositories",
       "mcp__github__get_file_contents",
