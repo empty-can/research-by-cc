@@ -22,7 +22,7 @@ Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ロ�
 ## ブランチ
 
 - 作業ブランチ: Phase 0 は `phase/local-mini-otel-infra/00_activity-plan`（`feature/local-mini-otel-infra` から作成）
-- `feature/local-mini-otel-infra` は main ではなく cve-triage 系列（`9fe51fa`）から分岐している。作り直すかは未判断（計画書 §7 #1）
+- `feature/local-mini-otel-infra` は develop から派生している（2026-09-27 のブランチ再編で、cve-triage 系列から切り離して本活動固有のコミットだけを載せ直した。計画書 §7 #1）。取り込み先は develop（ルート CLAUDE.md「ブランチ運用ルール」）
 
 ## 参照リソース
 
@@ -64,3 +64,4 @@ Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ロ�
 | 2026-09-25 | 新規作成（Phase 0 着手） |
 | 2026-09-27 | 計画書 v1.0 に合わせて再構成。背景・前提・スコープは計画書 §1、仕様上の事実は仕様別紙へ移し、本書は作業時の制約・注意・参照先に絞った |
 | 2026-09-27 | 計画書 v1.0 の正式レビュー完了を受け、Phase 0 を完了にした |
+| 2026-09-27 | ブランチ再編の結果に合わせてブランチ節を更新（計画書 v1.2） |
