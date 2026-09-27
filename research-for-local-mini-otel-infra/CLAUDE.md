@@ -4,78 +4,50 @@
 
 Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ローカルで完結する最小構成**で受信・蓄積・可視化する仕組みを構築する。
 
-## 背景
+背景・ゴール・問い①〜③・前提・スコープ・フェーズ構成は `reports/00.活動計画/活動計画書.md`（以下「計画書」）を正本とする。最終的な効用は、分析結果をルート資産（「モデル選定原則」、`check-model` skill 等）へ還流させることであり、**分析そのものを目的化しない**（計画書 §1）。
 
-cc の費用対効果を最大化したい。そのために、ステータスラインで見られるモデル・コンテキストサイズ・総トークン量だけでなく、次の情報をテレメトリとして収集・分析できるようにする:
+## 作業時の制約
 
-- effort 値
-- **作業の内容・性質の分類ごと**の送受信トークン（思考トークンを含む）
-- 上記を切り分けるためのタグ
+- **Windows ネイティブ・Docker 不要**で動く構成にする。WSL + Docker 前提の構成は本活動では作らない（第二のゴールとして次の活動で扱う）
+- 仕組みは本環境と職場環境（社内 LLM ゲートウェイ + Amazon Bedrock）の両方で動かす前提で設計する。**Claude Code は職場環境で検証しない**（確認手順書を用意し、作業指示者が実施する。計画書 Phase 3）
+- 収集データを外部の SaaS・クラウドへ送らない。**収集データ（プロンプト本文等を含み得る）はコミットしない**
+- 仕様は cc のバージョンに依存する。基線（cc と docs の版）は計画書 §2 冒頭
 
-分析で得たいもの:
+## 作業時の注意
 
-1. トークンを消費しやすい作業の特定
-2. 作業の性質に対する推奨モデル・推奨 effort の導出
+- OTel の仕様に関わる作業の前に `reports/00.活動計画/【別紙】公式仕様の調査結果.md`（仕様別紙）を読む。「見込み」とある項目は事実として扱わない
+- OTel の変数はユーザ settings（`~/.claude/settings.json`）の `env` に設定する。project / local settings では、有効化・送信先・内容記録の変数が無視される
+- transcript（`~/.claude/projects/*/*.jsonl`）は cc が既定 30 日で削除する。取込の仕組みができるまでは、分析に使う transcript が残っていることを前提にしない
 
-分析結果は、ルート `CLAUDE.md` の「モデル選定原則」と `check-model` skill の判定基準へフィードバックする（**これが本活動の最終的な効用**。分析そのものを目的化しない）。
+## ブランチ
 
-## 前提・制約
-
-- **Docker 不使用**。Windows 11 ローカルで完結して動作すること
-- OTel 受信サーバ・データシンク等は、**ローカル起動できる OSS を積極活用してよい**
-- 分析 UI は、デザイン・レイアウトを度々変えたくなる見込みがあるため、**Node.js 上の自作ダッシュボード**を有力候補とする（OSS 製品との比較は Phase 1 で行う）
-- 環境基線（2026-09-25 時点）: Claude Code **2.1.282** / Node.js **v24.14.0**
-- OTel の属性は v2.1.2xx 台で頻繁に追加・変更されている。**仕様は cc のバージョンに依存する**前提で扱う
-
-### ブランチに関する未決事項
-
-`feature/local-mini-otel-infra` は main ではなく cve-triage 系列（`9fe51fa`、2026-07-29 時点）から分岐しており、main 未取り込みの cve-triage 関連コミット 65 件を含む。main から作り直すかは**未判断**（作業指示者判断待ち）。
-
-## スコープ
-
-### 含む
-
-- cc が出力する OTel シグナル（metrics / logs(events) / traces(beta)）の受信・保存
-- 思考トークンを含むトークン内訳の取得（OTel 外の補完データソースを含む。後述）
-- 作業分類タグの付与方式の設計・実装
-- 分析用ダッシュボード
-- 分析結果に基づく推奨モデル×effort 表の作成と、ルート資産への反映提案
-
-### 含まない
-
-- チーム・組織単位の集中収集（本活動は個人ローカル用）
-- クラウド／SaaS の監視基盤（Datadog 等）への送信
-- Docker・WSL 前提の構成
-
-## 公式仕様から判明している重要事実（2026-09-25 / cc 2.1.282 時点）
-
-出典: `C:\cc-workspace\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（Monitoring 節、env-vars 節、statusline 節）。詳細と計画上の扱いは `reports/00.活動計画/活動計画書.md` の §2 を参照。
-
-- `claude_code.token.usage` / `cost.usage` と `api_request` イベントには `model` / `effort` / `query_source` / `skill.name` / `agent.name` などの属性が付く
-- **思考トークンは OTel では分離されない**（output_tokens に含まれる）。ただし transcript（`~/.claude/projects/*/*.jsonl`）の `message.usage.output_tokens_details.thinking_tokens` には記録されており、同じエントリに `requestId` もある（いずれも実測で確認）。OTel の `api_request` とは `request_id` で突合できる見込み。`api_response_body` イベントの usage から取る経路もある（未実測）
-- ユーザ定義 agent 名は `agent.name="custom"` に丸められる。ユーザ定義 skill 名はそのまま出る
-- `OTEL_RESOURCE_ATTRIBUTES` は起動時に固定され、セッション途中では変えられない
-- OTel 変数はユーザ settings の `env` で設定できる（`OTEL_LOG_RAW_API_BODIES` 等の一部は project / local settings では無視される）
+- 作業ブランチ: Phase 0 は `phase/local-mini-otel-infra/00_activity-plan`（`feature/local-mini-otel-infra` から作成）
+- `feature/local-mini-otel-infra` は main ではなく cve-triage 系列（`9fe51fa`）から分岐している。作り直すかは未判断（計画書 §7 #1）
 
 ## 参照リソース
 
 | 資料 | 場所 |
 |---|---|
-| cc 公式 docs（最新） | `C:\cc-workspace\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt` の `# Monitoring` 節（Monitoring usage）。ルート CLAUDE.md の暫定ルールが指す repo 内 references/ は 2026-05-24 で止まっているため使わない |
-| cc transcript | `~/.claude/projects/*/*.jsonl`（2026-09-25 時点で 21 プロジェクト / 約 217MB） |
+| cc 公式 docs | `C:\cc-workspace\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（`# Monitoring` 節）。ルート CLAUDE.md の暫定ルールが指す repo 内 references/ は古いため使わない |
+| 仕様別紙 | `reports/00.活動計画/【別紙】公式仕様の調査結果.md` |
+| 引継ぎ資料 v2.1 | `reports/00.活動計画/handover-report_by_chat-claude/claude-code-otel-telemetry-design-brief-v2.1.md`。検証項目（V-ID）とリスク（R-ID）は後続フェーズでも参照する。取り込み状況は `reports/00.活動計画/【別紙】引継ぎ資料v2.1取り込み対応表.md` |
+| クロスレビュー報告書 | `reports/00.活動計画/レビュー/` |
+| cc transcript | `~/.claude/projects/*/*.jsonl` |
 | ステータスライン実装 | `~/.claude/statusline-command.sh`（本 repo の管理外） |
 
 ## 成果物の配置
 
 - 報告書類: `reports/<タスク>/<フェーズ>/`（ルート CLAUDE.md の規約に従う）
 - 実装コード: `app/`（Phase 3 以降に作成予定。配置の確定は Phase 2）
-- **収集データ（プロンプト本文等を含み得る）はコミットしない**。保存先は Phase 2 で repo 外に決める
+- 収集データの保存先: repo 外（Phase 2 で決める）
 
 ## タスク進行状況
 
-- [x] Phase 0: 活動計画の策定
+- [ ] Phase 0: 活動計画の策定 (進行中: 計画書 v1.1 の作業指示者レビュー待ち)
   - [x] 活動フォルダ・CLAUDE.md 作成
-  - [x] 活動計画書 `reports/00.活動計画/活動計画書.md` の作業指示者承認（2026-09-25）
+  - [x] 計画書 v1.0 の作業指示者承認（2026-09-25）
+  - [x] 引継ぎ資料のクロスレビュー・v2.1 化
+  - [ ] 計画書 v1.1 改訂 (作業指示者レビュー待ち)
 - [ ] Phase 1: 基礎調査・フィジビリティ確認
 - [ ] Phase 2: 設計
 - [ ] Phase 3: PoC（エンドツーエンド疎通）
@@ -83,10 +55,11 @@ cc の費用対効果を最大化したい。そのために、ステータス�
 - [ ] Phase 5: ダッシュボードの実装
 - [ ] Phase 6: 運用・分析とフィードバック
 
-各 Phase の中身は活動計画書を正本とする。
+各 Phase の中身は計画書を正本とする。
 
 ## 変更履歴
 
 | 日付 | 内容 |
 |---|---|
 | 2026-09-25 | 新規作成（Phase 0 着手） |
+| 2026-09-27 | 計画書 v1.1 に合わせて再構成。背景・前提・スコープは計画書 §1、仕様上の事実は仕様別紙へ移し、本書は作業時の制約・注意・参照先に絞った |
