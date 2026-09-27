@@ -272,6 +272,12 @@ Claude Code / Anthropic API / Claude Agent SDK 等の Anthropic 公式情報を�
 
 ### ブランチ運用ルール
 
+**ブランチ戦略**:
+
+- **`develop`**: GitHub のデフォルトブランチ。各 feature ブランチの取り込み先で、一般的なプロダクトリリースの RC 版に相当する
+- **`main`**: GA 版に相当する安定版。develop に取り込んだ後しばらく問題が出なかった develop 上の過去の取り込み断面を、少し遅れて後を追うように main へマージする
+- **マージの方向**: feature ブランチ → `develop` → `main` の一方向。**main にマージできるのは develop だけ**で、feature ブランチやその他のブランチを main へ直接マージすることは禁止する
+
 各活動テーマと Git ブランチ・活動フォルダを **1:1:1 で対応** させる。これにより、現ブランチから活動フォルダを決定論的に解決でき、Skill / hook 等の自動化資産を機械的に再利用できる。
 
 **命名規約**:
@@ -279,21 +285,26 @@ Claude Code / Anthropic API / Claude Agent SDK 等の Anthropic 公式情報を�
 - **feature ブランチ**: 活動テーマにつき 1 本のみ。命名は `feature/<活動テーマ>`、対応する活動フォルダは `research-for-<活動テーマ>/`
   - 例: `feature/MCP-Srv-Sec-Inspection` ↔ `research-for-MCP-Srv-Sec-Inspection/`
 - **サブブランチ**: フェーズ単位等で feature ブランチから派生させてよい。命名は自由（例: `feature/<活動テーマ>/<フェーズ>` や `fix/<活動テーマ>-<内容>` 等）。**派生元の feature ブランチは活動テーマ識別の起点として保持する**
-- **`main`**: リポジトリ全体（横断的）の作業に使用する
+- **`develop`**: リポジトリ全体（横断的）の作業の起点。横断作業は develop、または develop から派生させた作業ブランチで行う
 
 **活動フォルダの解決ルール**（Skill / hook 等の自動処理が参照する規約）:
 
 | 現ブランチの状態 | 活動フォルダ |
 |---|---|
 | 現ブランチが `feature/<X>` 自身、または `feature/<X>` の派生サブブランチ | `research-for-<X>/` |
-| 現ブランチが `main`、または先祖に `feature/<X>` が存在しない | リポジトリルート (`./`) — 横断作業として扱う |
+| 現ブランチが `develop`・`main`、または先祖に `feature/<X>` が存在しない | リポジトリルート (`./`) — 横断作業として扱う |
 
 このルールに従う前提で、Skill 等が依存する解決スクリプトは `.claude/scripts/resolve-activity-dir.sh` に集約する（個別 Skill 内に解決ロジックを埋め込まない）。
 
 **サブブランチ運用の留意事項**:
 
 - サブブランチからさらに孫ブランチを作る場合も、最終的な祖先に **1 本の feature ブランチ** が存在する状態を保つ
-- feature ブランチを跨ぐような作業（例: 別テーマへの知見流用）は、いったん main 経由で行うかドキュメント化で対応する
+- **活動の資産をもとに共通資産を作る作業**（その活動の資産を入力にしないと作れないもの）は、develop 経由で他の活動へ展開する:
+  1. feature ブランチから清書ブランチ `promote/<活動テーマ>/<資産名>` を切り、develop に入れられる体裁へ清書する。清書ブランチでは共通パス（リポジトリ直下・`.claude/` 配下）以外を編集しない
+  2. 清書のコミットだけを develop の上へ移す: `git rebase --onto develop <feature ブランチの先端> <清書ブランチ>`。`--onto` を付けない `git rebase develop` では、feature ブランチの活動コミットも一緒に develop へ載ってしまう
+  3. develop との差分が共通パスだけであることを確かめてから、develop を fast-forward する
+  4. 元の feature ブランチ（と、資産を使いたい他の feature ブランチ）を develop へ rebase して取り込む
+- 資産を移さず知見だけを共有すればよい場合は、ドキュメント化で対応してよい
 
 ## Claude が生成する一時ファイル・中間成果物の出力先
 
