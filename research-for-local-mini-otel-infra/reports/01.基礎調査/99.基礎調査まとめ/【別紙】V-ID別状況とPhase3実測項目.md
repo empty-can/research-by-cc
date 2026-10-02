@@ -44,8 +44,8 @@
 | `event.timestamp` での並べ替えが実用上問題ないか | 常に | 1-4 §6（v2.1 R-4） |
 | 書き込み中の JSONL を別プロセスの DuckDB で読めるか。V-11(b) #14・#15・#28 | 保存案 S2 を採る場合 | 1-4 §3.3・§6、[【別紙】V-11(b)確認結果](【別紙】V-11(b)確認結果.md) |
 | `node:sqlite` の動作（experimental の警告を含む）、DuckDB の SQLite 拡張で SQLite を読めるか | 保存案 S1 を採る場合 | 1-4 §3.4、[まとめ報告書 §3.2](報告書.md#sec-3-2) |
-| hook の待ち時間を、対話モードと日常のセッションで測る（command hook と Mod）。Node.js の command hook の所要時間は、Phase 1 の観測では通常 130〜370 ms で、2.1〜2.8 秒になったのは対話セッションの初回プロンプト 2 回（i3・i4。原因は未特定）だけだった。llm_request の開始までの遅延は、hook なし 135 ms、command hook 287 ms、Mod 166 ms（`-p`、各 n=3 の平均） | タグ案 L1 を採る場合 | [1-3 §4](../03.作業分類タグ方式/調査報告書.md#sec-4)、[1-8 §4.3](../08.cc2.1.287差分の確認/調査報告書.md#sec-4-3) |
-| Mod の対話モードでの読み込み・遅延・`prompt_id` の一致（`-p` だけ確認済み） | タグ案 L1 を Mod で実装する場合 | [1-8 §6](../08.cc2.1.287差分の確認/調査報告書.md#sec-6) |
+| hook の待ち時間を、日常のセッションで測る（command hook と Mod。llm_request の開始までの上乗せと、hook 単体の所要時間の両方）。Phase 1 では各 n=3 の短い実行だけを測った。上乗せは `-p` で command hook 約 150 ms・Mod 約 30 ms、対話モードで command hook 約 440 ms・Mod 約 300 ms。command hook 単体の所要時間は、`-p` では 130〜370 ms、対話モードは 6 回中 2 回（2.1.283 の i3・i4）が 2.1〜2.8 秒で、原因は未特定 | タグ案 L1 を採る場合 | [1-3 §4](../03.作業分類タグ方式/調査報告書.md#sec-4)、[1-8 §4.4](../08.cc2.1.287差分の確認/調査報告書.md#sec-4-4) |
+| Mod の日常の長いセッション、Desktop・VS Code での読み込み・`prompt_id` の一致（`-p` と対話モードの短い実行では各 3 回確認済み） | タグ案 L1 を Mod で実装する場合 | [1-8 §4.2](../08.cc2.1.287差分の確認/調査報告書.md#sec-4-2)・§6 |
 | `OTEL_LOG_TOOL_CONTENT` の記録対象の拡大（R12） | 内容記録のフラグを有効にする検証の時 | [1-8 §6](../08.cc2.1.287差分の確認/調査報告書.md#sec-6) |
 | 選んだ画面案の動作（D2 は Node の版による DuckDB 接続を含む） | 画面案を選んだ後 | 1-5 §7 |
 | `retention_sweep` イベント（V-11(b) #9）、未観測のイベント（#2） | 日常利用の中で | [【別紙】V-11(b)確認結果](【別紙】V-11(b)確認結果.md) |
@@ -60,7 +60,7 @@
 | 思考トークンの内訳が返るか、社内プロキシが usage を改変しないか、V-10 | 計画書 §2.2・Phase 3 |
 | PowerShell の版（候補 ③ を採る場合だけ） | [1-1 §7](../01.実データ確認/調査報告書.md#sec-7) |
 | auto mode の既定化（third-party provider では対話型も `-p` も auto mode で起動する）。検証時は permission mode を明示して固定し、auto mode による挙動・コストの差を確かめる | [1-8 §2.1](../08.cc2.1.287差分の確認/調査報告書.md#sec-2-1) D8、計画書 Phase 3 |
-| Claude Mods が managed settings（`allowManagedModsOnly` 等）で止められていないか | [1-8 §4.1](../08.cc2.1.287差分の確認/調査報告書.md#sec-4-1)・§6 |
+| Claude Mods と command hook が managed settings で止められていないか。`allowManagedModsOnly` は Mod だけを、`allowManagedHooksOnly` は利用者の settings hook も、`disableAllHooks` は両方を止める。`disableSideloadFlags` は `--plugin-dir` を拒否する。両方が止められていれば、タグ案 L1 は成り立たない | [1-8 §4.4](../08.cc2.1.287差分の確認/調査報告書.md#sec-4-4)・§6 |
 | Mod の `$.http.fetch` で、ローカル宛先（localhost）への送信が拒否されないか（web fetch を無効にしている組織で。docs に記載が無い）。Mods で HTTP 送信する場合だけ | [1-8 §4.1](../08.cc2.1.287差分の確認/調査報告書.md#sec-4-1)・§6 |
 
 ## 変更履歴
@@ -69,3 +69,4 @@
 |---|---|---|
 | 2026-09-28 | v0.1 | まとめ報告書 v0.3 の §6.1・§6.3 を移して作成（クロスレビュー U-S5） |
 | 2026-10-03 | v0.2 | 1-8 を受けて、hook の待ち時間の項目を訂正し（通常 130〜370 ms。2 秒超は 2 回だけ）、Mod の遅延と対話モードでの確認を加えた。1-8 §6 の未確認事項（auto mode と permission mode の固定、分類器の見え方、長い対話セッションの transcript、Mods の可否、`$.http.fetch` の localhost、R7・R11・R12）を Phase 3 の実測項目に加え、測定を 2.1.287 以降で行うことを記した。V-5 と Bedrock の `requestId` の行に docs の記載を追記 |
+| 2026-10-03 | v0.3 | クロスレビュー（論理 I3、人間読み手 U-I3、実用 I2）の反映。hook の待ち時間の行を、測定点とモードを分けて書き直した（「通常 130〜370 ms」を改めた）。Mod の行を、対話モードで確認済みの範囲に合わせて改めた。職場環境の Mods の行に、command hook も managed settings で止められうることを加えた。項目数は変わらない |
