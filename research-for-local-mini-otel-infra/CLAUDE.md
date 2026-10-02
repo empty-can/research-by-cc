@@ -29,7 +29,7 @@ Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ロ�
 
 | 資料 | 場所 |
 |---|---|
-| cc 公式 docs | `C:\cc-workspace\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（`# Monitoring` 節）。ルート CLAUDE.md の暫定ルールが指す repo 内 references/ は古いため使わない |
+| cc 公式 docs | `C:\cc-workspace\LLMs\official-llms-txts\code.claude.com\docs\llms-full.txt`（`# Monitoring` 節）。このローカル版は最新の cc の版に追いついていないことがある（2026-10-02 取得版には 2.1.287 が未反映だった）。その場合は公式の Monitoring ページ（`https://code.claude.com/docs/en/monitoring-usage.md`）と changelog で補う（1-8 §1）。ルート CLAUDE.md の暫定ルールが指す repo 内 references/ は古いため使わない |
 | 仕様別紙 | `reports/00.活動計画/【別紙】公式仕様の調査結果.md` |
 | 引継ぎ資料 v2.1 | `reports/00.活動計画/handover-report_by_chat-claude/claude-code-otel-telemetry-design-brief-v2.1.md`。検証項目（V-ID）とリスク（R-ID）は後続フェーズでも参照する。取り込み状況は `reports/00.活動計画/【別紙】引継ぎ資料v2.1取り込み対応表.md` |
 | クロスレビュー報告書 | `reports/00.活動計画/レビュー/` |
@@ -52,8 +52,11 @@ Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ロ�
 - [ ] Phase 1: 基礎調査・フィジビリティ確認 (進行中)
   - [x] 1-1〜1-6 の調査報告書・まとめ報告書・V-11(b) 確認結果の初版（`reports/01.基礎調査/`）
   - [ ] 執筆ガイドラインによるセルフチェックと 3 ペルソナのクロスレビュー (進行中)
-  - [ ] 計画書 §7 #2（内容記録のフラグ）の判断と、それを受けた V-2b 等の残作業 (保留: 作業指示者の判断待ち。まとめ報告書 §5 の Q5 で、Phase 2 と並行して進めることを提案中)
-  - [ ] 候補の絞り込みの承認
+  - [x] 追加調査 1-7（GitHub Issue #4、生成 AI オブザーバビリティ規格）・1-8（cc 2.1.287 までの仕様差分）と、01〜06・まとめ報告書（v0.5）・別紙 2 件・計画書（v1.3 改訂案）への反映（2026-10-03）
+  - [ ] 計画書 §7 #2（内容記録のフラグ）の判断と、それを受けた V-2b 等の残作業（1-8 §6 の未確認事項を含む） (保留: 作業指示者の判断待ち。まとめ報告書 §5.1 の Q2・Q3・Q5 で、Phase 2 と並行して進めることを提案中)
+  - [ ] 候補の絞り込みの承認 (保留: まとめ報告書 §5.1 の Q1 の回答待ち)
+  - [ ] 計画書 v1.3 改訂案の承認 (保留: 作業指示者の承認待ち。Q1〜Q5 の回答で決まる箇所は改訂案で保留中)
+  - [ ] 作業指示者裁定待ち事項 J-1〜J-10 の裁定 (保留: 作業指示者の裁定待ち。`reports/01.基礎調査/作業指示者裁定待ち事項.md`)
 - [ ] Phase 2: 設計
 - [ ] Phase 3: PoC（エンドツーエンド疎通）
 - [ ] Phase 4: 収集基盤の実装
@@ -72,3 +75,4 @@ Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ロ�
 | 2026-09-27 | ブランチ再編の結果に合わせてブランチ節を更新（計画書 v1.2） |
 | 2026-09-27 | Phase 1 に着手。作業ブランチと進捗を追記 |
 | 2026-09-28 | 公開リポジトリに載せる環境情報の範囲を「作業時の制約」に追加（クロスレビュー U-I6） |
+| 2026-10-03 | Phase 1 の進捗に 1-7・1-8 とその反映、計画書 v1.3 改訂案と裁定待ち事項の承認待ちを追加。参照リソースの cc 公式 docs に、ローカル版が遅れる場合の補い方（1-8 §1）を追記 |
