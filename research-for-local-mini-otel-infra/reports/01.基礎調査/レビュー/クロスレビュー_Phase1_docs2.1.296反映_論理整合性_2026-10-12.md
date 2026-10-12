@@ -354,6 +354,13 @@ CRITICAL は無い。どれも Phase 2 の着手を止めない。I1・I2・I4 �
 * **指摘内容に対する同意の程度**: 完全同意
 * **指摘内容に対する同意の程度の根拠**: docs の直接接続の項は「as Anthropic rolls it out」と条件を付け、`CLAUDE_CODE_AUTO_MODE_SERVER=0` で自前の分類器リクエストに切り替えられる（直接接続では v2.1.281 以降）。前提が見込みなのに結論を言い切り、本環境で確かめられる手段も使っていなかった
 * **判断材料の追加情報**: 指摘を受けて、本環境で C-6b を行った（2026-10-12。scratchpad `rev296/P_feasibility-2.1.296.md` の C-6b）。cc 2.1.296、対話モード（auto mode）、`--model claude-sonnet-5-5`、Remote Control なしで、Bash で外部への curl を実行させる操作を、(a) 既定と (b) `=0`（その cc プロセスにだけ設定）で各 2 回、交互に行った。(a) では分類器の別のリクエストは debug log にも OTel にも出ず、サーバー側でチェックしたことを直接示す行も無かった（同乗したとは断定しない）。(b) では判定ごとに自前の分類器リクエスト（Sonnet 5）が debug log に出たが、OTel の `api_request` にも `token.usage` にも現れず、`query_source` の新しい値も無かった。したがって「本環境では成り立たない」は、「どちらの条件でも分類器のリクエストは `api_request` に出ないので、`query_source` の新しい値を待つ確かめ方は使えない」という観測に置き換わる。あわせて、職場で自前の分類器リクエストに落ちると、課金される分が OTel の集計から漏れるという、新しい論点が分かった。本環境の `/status` の Auto mode server 行は見ていない（制約として書いた）
+* **Round 3 確定後の訂正（0.9 追補、レビューイ発）**: 上の「(b) では…OTel の `api_request` にも `token.usage` にも現れず」から導いた「自前の分類器リクエストは OTel に出ない」は、不正確だった。Round 3 の確定後に、レビューイが traces を見落としていたことに気づいて訂正した。追加の調査（scratchpad `rev1012/Q_classifier-telemetry.md`）で、次のことを確かめた
+  1. (b) の自前の分類器リクエストは、traces（`CLAUDE_CODE_ENHANCED_TELEMETRY_BETA` で出す `claude_code.llm_request` span）には b1・b2 に 1 本ずつ出ていた。`query_source_safe=auto_mode`、モデルは Sonnet 5、親 span は `claude_code.tool.blocked_on_user`。debug log のリクエスト ID・時刻と、span の `client_request_id`・時刻が 2 回とも一致した。トークン数も span にある（1 回あたり入力 90・出力 9。ほかに約 4.6 万トークンのキャッシュで、b1 は書き込み、b2 は読み込み）。出ないのは logs の `api_request` と metrics（`token.usage`・`cost.usage`）だけである
+  2. 1-8 §7.3.4 の「ターン終了後の `side_query`」も、traces には `query_source_safe=agent_classifier` の span（Haiku。2.1.287 は Haiku 4.5、2.1.296 は Haiku 5.5）として出ていた。`client_request_id` は 2.1.287 の 15 run、2.1.296 の 12 run のすべてで debug log と一致した。この span は Remote Control に接続した対話 run にだけあり、Remote Control を切った 13 run には無い。何を判定しているかは未確認である。`quota_check` は traces にも無い
+  3. logs・metrics から外す理由は docs に書かれていない。Agent SDK の `modelUsage` は分類器を除くと明記している
+  4. したがって、R6 の確かめ方（`query_source` の新しい値を待つ）は、logs・metrics では使えず、traces では `query_source_safe` で使える。職場の分類器の分の過小評価は、「logs・metrics だけで集計すると」の条件付きになる。本活動の受信は traces も受けるので、traces の span を集計すれば数えられる（traces は beta 機能で、版によって形が変わりうる）
+  * 反映: 1-8 §0・§3.4・D33・§7.3.4・§7.4（Phase 1 の誤りの一覧に C-6b の誤りを追加）・§7.5、まとめ §1.3・§2・§4.2・§6、V-ID 別紙の R6・logs・metrics に出ない API 呼び出し・職場の分類器の行、計画書 §2.2・Phase 2・Phase 3、仕様別紙 §5、裁定待ち事項 J-21（§2・§3）・J-22（§1・§3。裁定前の推奨 (C) がこの見落としに基づいていたことを書いた）。Phase 2 の設計項目は「traces の `llm_request` span を集計の正本にするか、logs・metrics を正本にして span で補うかを決める」に具体化した
+  * 本報告書の「レビュー結果サマリ」の I4 の記述、ブロック指摘一覧の I4 の行、本指摘のレビューア確認の理由 (3)（「OTel の `api_request` は…分類器の Sonnet 5 は無い」）と Devil's Advocate の I4 の行は、この訂正の前に書かれたもので、logs・metrics についての記述としては正しいが、「OTel に出ない」と読める。レビューイは編集していない。レビューアの追補確認をお願いしたい
 
 ##### I4. レビューア確認: 問題点（0.9）
 
@@ -686,7 +693,11 @@ CRITICAL は無い。どれも Phase 2 の着手を止めない。I1・I2・I4 �
 
 #### S7. レビューイからの見解・補足
 
-{{Round 2 で記入}}
+* **レビューイの見解**: 提案 1〜3 とも採用した（0.9 追補）
+  1. 提案 1: まとめ §4.2 の箇条の冒頭を、「docs によれば、職場の設定ではサーバー側チェックが止まっている可能性が高く、その場合、分類器は Claude Code 自前のリクエスト（課金される）で動いている」と推定の形にした。「その要求は OTel に出ない」は、I4 の追補の訂正（traces の見落とし）とあわせて、「本環境では logs（`api_request`）と metrics には出なかったが、traces の span には出た（C-6b）」とし、過小評価を「logs・metrics だけで集計すると」の条件付きにした。V-ID 別紙・1-8 §7.5・計画書 Phase 3 の同じ推定も「可能性が高い」「見込み」の言い方にそろえた
+  2. 提案 2: まとめ §4.2 に「docs は例外を置いており、Claude Code を組み込むホストが `CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST` を設定している場合は、この変数があってもサーバー側チェックを依頼する」を 1 文足した。V-ID 別紙の職場の分類器の行の (1) と記録する値にこの変数の有無を加え、1-8 §7.5 の職場の確認と計画書 Phase 3 にも同じ例外と記録を書いた
+  3. 提案 3: S4 の回答どおりになるよう、まとめ §4.2 に判定なしの拒否（gateway が応答を途中で切る・結果を書き換えると、通知の代わりに判定なしの拒否になり、その操作は実行されない。10 回続くとターンが止まる）を書き、Phase 3 で確かめる値に「判定なしの拒否の有無」を足した
+* **補足**: 同じ箇条で、サーバー側チェックの変数を明示したセッションは、人間読み手 U-I2 を受けて J-23 の裁定後とした
 
 #### S7. レビューア確認（0.9 追補）
 
@@ -845,4 +856,5 @@ CRITICAL は無い。どれも Phase 2 の着手を止めない。I1・I2・I4 �
 |0.8|2026-10-12|初版作成（Claude Opus、独立第三者）。対象は 29828f2..f59e452 の差分（docs 2.1.296 の反映と C-3c）。既存の節は 2026-10-10 のレビュー（0.9）のまま。CRITICAL 0・IMPORTANT 4・SUGGESTION 6・POSITIVE 3|
 |0.8（Round 2: レビューイ回答）|2026-10-12|全 13 件にレビューイ回答を記入し、受容した修正を対象文書に反映した（Claude Opus 5.5。コミット 969eef3）。I4 は本環境の実測 C-6b（既定と `CLAUDE_CODE_AUTO_MODE_SERVER=0`、各 2 回）で対応した。作業指示者の職場の情報と J-22 の裁定（(A)）も反映した。版数は 0.8 のまま|
 |0.9|2026-10-12|Round 3（レビューア確認）完了（Claude Opus、独立第三者）。対象はコミット 969eef3 の回答と修正（`git diff f5c3b2a..969eef3`）と、追加の実測 C-6b（P の「C-6b」と生データ `2-296/` の c6b-* を確かめ直した）。0.8 版 10 件（POSITIVE を除く）の最終結論は、受容 8（I1〜I3・S1・S2・S4〜S6）、修正採用 2（I4・S3）。取り下げ・重要度変更・再指摘 0、10 件とも達成で、0.9.1 は発行しない。Round 2 の修正で入ったまとめ §4.2 の確度の書き方と docs の例外、S4 の回答と本文のずれを新規指摘 S7（SUGGESTION）として追加した（1ラウンド継続）。件数表・ブロック指摘一覧・Devil's Advocate チェックリストを更新|
+|0.9（Round 3 追補: レビューイ回答）|2026-10-12|S7 にレビューイ回答を記入し、提案 1〜3 を対象文書に反映した（Claude Opus 5.5）。Round 3 確定後に、レビューイが traces を見落としていたことに気づき、C-6b の「自前の分類器リクエストは OTel に出ない」を「logs（`api_request`）と metrics には出ないが、traces の span には出る」に訂正した。訂正の内容と反映先は I4 のレビューイ欄（問題点）に追記した。レビューア記入欄（サマリ・ブロック指摘一覧・I4 の理由・Devil's Advocate）は編集していない。版数は 0.9 のまま|
 |1.0|||
