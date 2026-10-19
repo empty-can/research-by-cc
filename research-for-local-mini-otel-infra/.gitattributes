@@ -1,5 +1,13 @@
-# 本活動フォルダのテキストファイルは改行を LF にそろえる（2026-10-19。CRLF の混在が修正とレビューの負荷になっていたため）
+# 本活動フォルダの改行の規約（2026-10-19）。行は base-dev-kit-for-cc の .claude/.gitattributes に合わせた
+# 既定は LF。CRLF が要るものだけを後勝ちの例外にする。`text`（強制）ではなく `text=auto`（バイナリ判定を残す）
 * text=auto eol=lf
-# Windows のバッチは CRLF が要るので、作った場合だけ CRLF にする
-*.bat text eol=crlf
-*.cmd text eol=crlf
+
+# PowerShell が読むファイル: UTF-8 BOM + CRLF（5.1 は BOM 無し UTF-8 を CP932 と誤読する。BOM は Git が触らない）
+*.ps1          text=auto eol=crlf
+*.psm1         text=auto eol=crlf
+*.psd1         text=auto eol=crlf
+*.ps1.template text=auto eol=crlf
+
+# cmd.exe が読むファイル: CP932 + CRLF・BOM なし（`.cmd` は使わず `.bat` に一本化する）
+*.bat text=auto eol=crlf
+*.cmd text=auto eol=crlf
