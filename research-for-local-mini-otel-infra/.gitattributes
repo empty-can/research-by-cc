@@ -1,4 +1,4 @@
-# 本活動フォルダの改行の規約（2026-10-19）。行は base-dev-kit-for-cc の .claude/.gitattributes に合わせた
+# 本活動フォルダの改行の規約（2026-10-19）。規約の正本は .claude/rules/win-file-encoding.md（develop にある）
 # 既定は LF。CRLF が要るものだけを後勝ちの例外にする。`text`（強制）ではなく `text=auto`（バイナリ判定を残す）
 * text=auto eol=lf
 
