@@ -18,6 +18,8 @@ Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ロ�
 
 - OTel の仕様に関わる作業の前に `reports/00.活動計画/【別紙】公式仕様の調査結果.md`（仕様別紙）を読む。「見込み」とある項目は事実として扱わない
 - OTel の変数はユーザ settings（`~/.claude/settings.json`）の `env` に設定する。project / local settings では、有効化・送信先・内容記録の変数が無視される
+  - 内容を記録する変数（`OTEL_LOG_USER_PROMPTS`・`OTEL_LOG_ASSISTANT_RESPONSES`・`OTEL_LOG_TOOL_DETAILS`・`OTEL_LOG_TOOL_CONTENT`・`OTEL_LOG_RAW_API_BODIES`）は、取りこぼしの無い仕組みのためなら常時有効にしてよい（応答の本文も、設計・開発に寄与するなら残してよい。不要になったら消す）。ただし、他のリポジトリの作業に悪影響を与えうるもの（例: `OTEL_LOG_RAW_API_BODIES` はリクエストごとに会話履歴の全体をディスクに書く）は、ユーザ settings に置かず、調査・検証のランチャやスクリプトの中でプロセスのスコープで渡す。どれをどちらに置くかは Phase 2 の設計で決める。ユーザ settings に置くものは、Claude が手順を書き、作業指示者が設定する（2026-10-19 の作業指示者の回答）
+- 収集したデータ（OTel の受信の記録、raw body の file モードの出力、検証の記録）は、repo の外の `%LOCALAPPDATA%\local-mini-otel\` の下に置く。毎回同じ場所にし、セッションごとに変わる scratchpad には置かない。V-2b の記録は `v2b\` に置き、V-2b の完了後も消さずに残す（2026-10-19 の作業指示者の回答）。repo にはコミットしない。クラウド同期（OneDrive 等）の対象のフォルダには置かない
 - transcript（`~/.claude/projects/*/*.jsonl`）は cc が既定 30 日で削除する。取込の仕組みができるまでは、分析に使う transcript が残っていることを前提にしない
 - 実機検証で Claude が起動する対話セッション（probe と Phase 3 の比較実験）は、Remote Control を切って起動する（`remoteControlAtStartup` を false にする JSON ファイルを `--settings` に渡す。ユーザ設定は起動時に接続するため、切らないと計測の条件が変わる。1-8 §7.3.4）。J-12 の判定に使う日常のセッションは切らない（裁定待ち事項 J-19）
 - Claude が起動する計測用のセッション（probe と Phase 3 の比較実験。`-p` と対話）では、plugin の構成を、比べる相手の測定（前回の基線）と同じにする。前回の測定の後に有効になった plugin を、hook を登録しないものも含めて、`--settings` に渡す JSON ファイルの `enabledPlugins` で false にし、そのプロセスだけ無効にする（ユーザ設定は変えない。2.1.302 の再確認では、増えた 4 つをすべて無効にした）。Remote Control を切る設定と同じファイルにしてよい。ファイルは plugin の名前を含むので、repo に置かず scratchpad に置く。無効になったことは、OTel の `plugin_loaded` にそれらの plugin が出ないことと、`hook_registered` が probe の作業フォルダの hook だけになることで確かめる。有効なままだと、hook なしの条件にもその hook が走り、版の間の比較ができない。日常のセッション（J-19）は無効にせず、plugin の構成を記録する（1-8 §8.3.5、裁定待ち事項 J-25）。報告書には plugin の名前を書かない
@@ -110,3 +112,4 @@ Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ロ�
 | 2026-10-19 | 作業指示者の確認（Q1〜Q4 の判断の材料の不足）を受けたまとめ報告書 v1.1 を進捗に足し、作業時の注意に判断事項の材料のそろえ方を足した。人間読み手の読む部分にまとめ §3 を加えた |
 | 2026-10-19 | 作業時の注意に、改行を LF にそろえることと `.gitattributes` を足した（作業指示者の指示） |
 | 2026-10-19 | `.gitattributes` の行を文字コードの規約（win-file-encoding）に合わせ（PowerShell 系と `.bat` は CRLF）、規約を develop に入れたことと本ブランチへの取り込みの時期を作業時の注意に書いた（作業指示者の判断） |
+| 2026-10-19 | 作業時の注意に、内容を記録する変数の置き方（他のリポジトリに影響しうるものはプロセスのスコープ）と、収集したデータの置き場所（`%LOCALAPPDATA%local-mini-otel`）を足した（作業指示者の回答） |
