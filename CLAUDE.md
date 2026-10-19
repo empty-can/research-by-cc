@@ -89,6 +89,7 @@ research-for-local-RAG-for-cc/
 | output-style | `code-review` | レビュー結果のフォーマット定義。CRITICAL / IMPORTANT / SUGGESTION / POSITIVE 4 段階 |
 | skill | `cross-review` | クロスレビュー報告書の雛型と運用ルール集約 Skill（`paths:` 自動発火、`user-invocable: false`）。テンプレ 3 種 + 詳細運用仕様 + 概観を `.claude/skills/cross-review/` に統合 |
 | skill | `mechanism-builder` | CLAUDE.md / Rule / Skill への仕組み化判断・設計・実装支援。`/mechanism-builder [<対象名>]` で明示実行可。自律検知・提案プロトコルは `.claude/rules/mechanism-builder-detection.md`（常時ロード）に従う |
+| skill | `win-file-encoding` | CP932 と UTF-8 の一括変換・検査の手動ツール。日常の `.ps1`・`.bat` の扱いは `.claude/rules/win-file-encoding.md`（`paths:` で該当ファイルを触るときだけロード）と hook 2 本（`.claude/hooks/bat_cp932_guard.py`・`ps1_bom_crlf_check.py`）が担う。base-dev-kit-for-cc から写した（2026-10-19。本文の「キット」は base-dev-kit-for-cc を指す） |
 
 ### 仕組み化判断
 
@@ -96,6 +97,8 @@ research-for-local-RAG-for-cc/
 
 ### path-scoped rule
 `.claude/rules/coding-standards.md` は frontmatter の `paths:` で **コードファイル編集時のみロード**される。Markdown だけ触る作業ではロードされないので、コード規約をここに集約してコンテキスト消費を抑えている。プロジェクト固有の言語別規約を追加する場合は同ディレクトリに新ファイルを切る。
+
+`.claude/rules/win-file-encoding.md` も path-scoped で、`.ps1`・`.psm1`・`.psd1`・`.bat`・`.cmd` を触るときだけロードされる。保存形式は原則 UTF-8 で、PowerShell 系は UTF-8 + BOM + CRLF、`.bat` は CP932 + CRLF（`.cmd` は使わない）。改行は `.claude/.gitattributes`（`.claude/` 以下）と、活動フォルダごとの `.gitattributes` が拡張子ごとに決める。`settings.json` の hook（`.bat` の Read の差し替えと書き戻し、PowerShell 系の BOM・CRLF の検査）は **Python 3.10 以上が `python` として PATH に要る**。
 
 ### 設定の階層
 - `.claude/settings.json` — チーム共有・コミット対象

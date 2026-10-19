@@ -6,7 +6,15 @@
       "Read(./.env.*)",
       "Read(./secrets/**)",
       "Read(~/.aws/credentials)",
-      "Read(~/.ssh/**)"
+      "Read(~/.ssh/**)",
+      "Read(**/*.reg)",
+      "Edit(**/*.reg)",
+      "Read(//**/*.reg)",
+      "Edit(//**/*.reg)",
+      "Edit(**/*.bat)",
+      "Edit(//**/*.bat)",
+      "Edit(**/*.cmd)",
+      "Edit(//**/*.cmd)"
     ],
     "allow": [
       "Bash(git status:*)",
@@ -43,6 +51,131 @@
           {
             "type": "command",
             "command": "git status --short"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Read(**/*.bat)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/bat_cp932_guard.py",
+              "pre"
+            ],
+            "onFailure": "block"
+          },
+          {
+            "type": "command",
+            "if": "Read(//**/*.bat)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/bat_cp932_guard.py",
+              "pre"
+            ],
+            "onFailure": "block"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Read(.claude/.bat-shadow/**)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/bat_cp932_guard.py",
+              "post"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Edit(.claude/.bat-shadow/**)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/bat_cp932_guard.py",
+              "post"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Write(.claude/.bat-shadow/**)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/bat_cp932_guard.py",
+              "post"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Edit(**/*.ps1)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/ps1_bom_crlf_check.py"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Write(**/*.ps1)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/ps1_bom_crlf_check.py"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Edit(**/*.psm1)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/ps1_bom_crlf_check.py"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Write(**/*.psm1)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/ps1_bom_crlf_check.py"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Edit(**/*.psd1)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/ps1_bom_crlf_check.py"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Write(**/*.psd1)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/ps1_bom_crlf_check.py"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Edit(**/*.ps1.template)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/ps1_bom_crlf_check.py"
+            ]
+          },
+          {
+            "type": "command",
+            "if": "Write(**/*.ps1.template)",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/ps1_bom_crlf_check.py"
+            ]
           }
         ]
       }

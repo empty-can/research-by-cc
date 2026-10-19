@@ -1,0 +1,27 @@
+# =============================================================================
+# .claude/.gitattributes ― .claude/ 配下の資産の保存形式（改行）を拡張子ベースで固定
+# =============================================================================
+# 規約の正本は rules/win-file-encoding.md。行は base-dev-kit-for-cc の .claude/.gitattributes から写した（2026-10-19）。
+# 保護が届くのは .claude/ 以下だけ。活動フォルダ（research-for-*/）は、それぞれの .gitattributes で決める。
+#
+# ⚠ `text`（強制）ではなく `text=auto` を使う。強制するとバイナリ検出が無効になり、
+#    PowerShell 5.1 の Out-File（既定 UTF-16LE）で作った .ps1 が checkout 時に不可逆に壊れる。
+# =============================================================================
+# 既定は LF。CRLF が要るものだけを後勝ちの例外にする。
+* text=auto eol=lf
+
+# --- PowerShell が読むファイル: UTF-8 BOM + CRLF ---
+# Windows PowerShell 5.1 は BOM 無し UTF-8 を CP932 と誤読し、PowerShell 7 は既定 UTF-8 で
+# CP932 を読めない。5.1 と 7 の両方で読める形式は UTF-8 + BOM だけ。
+*.ps1          text=auto eol=crlf
+*.psm1         text=auto eol=crlf
+*.psd1         text=auto eol=crlf
+*.ps1.template text=auto eol=crlf
+
+# --- cmd.exe が読むファイル: CP932 + CRLF・BOM なし ---
+# cmd.exe は BOM を読み飛ばさず 1 行目を壊すため、.bat に BOM を付けてはならない。
+# CP932 のマルチバイト後続バイトに 0x0A / 0x0D は現れないので `text` の改行変換はバイト安全。
+# 中身の文字コード自体は Git では表現できないため、rules/win-file-encoding.md と
+# hooks/bat_cp932_guard.py が担保する。`.cmd` は使用禁止（`.bat` に一本化）。
+*.bat text=auto eol=crlf
+*.cmd text=auto eol=crlf
