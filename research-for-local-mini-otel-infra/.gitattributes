@@ -1,0 +1,5 @@
+# 本活動フォルダのテキストファイルは改行を LF にそろえる（2026-10-19。CRLF の混在が修正とレビューの負荷になっていたため）
+* text=auto eol=lf
+# Windows のバッチは CRLF が要るので、作った場合だけ CRLF にする
+*.bat text eol=crlf
+*.cmd text eol=crlf
