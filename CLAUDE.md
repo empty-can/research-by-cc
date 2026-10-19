@@ -89,7 +89,7 @@ research-for-local-RAG-for-cc/
 | output-style | `code-review` | レビュー結果のフォーマット定義。CRITICAL / IMPORTANT / SUGGESTION / POSITIVE 4 段階 |
 | skill | `cross-review` | クロスレビュー報告書の雛型と運用ルール集約 Skill（`paths:` 自動発火、`user-invocable: false`）。テンプレ 3 種 + 詳細運用仕様 + 概観を `.claude/skills/cross-review/` に統合 |
 | skill | `mechanism-builder` | CLAUDE.md / Rule / Skill への仕組み化判断・設計・実装支援。`/mechanism-builder [<対象名>]` で明示実行可。自律検知・提案プロトコルは `.claude/rules/mechanism-builder-detection.md`（常時ロード）に従う |
-| skill | `win-file-encoding` | CP932 と UTF-8 の一括変換・検査の手動ツール。日常の `.ps1`・`.bat` の扱いは `.claude/rules/win-file-encoding.md`（`paths:` で該当ファイルを触るときだけロード）と hook 2 本（`.claude/hooks/bat_cp932_guard.py`・`ps1_bom_crlf_check.py`）が担う。base-dev-kit-for-cc から写した（2026-10-19。本文の「キット」は base-dev-kit-for-cc を指す） |
+| skill | `win-file-encoding` | CP932 と UTF-8 の一括変換・検査の手動ツール。日常の `.ps1`・`.bat` の扱いは `.claude/rules/win-file-encoding.md`（`paths:` で該当ファイルを触るときだけロード）と hook 2 本（`.claude/hooks/bat_cp932_guard.py`・`ps1_bom_crlf_check.py`）が担う。2026-10-19 に導入（今後は marketplace-for-cc 経由での配布を予定） |
 
 ### 仕組み化判断
 

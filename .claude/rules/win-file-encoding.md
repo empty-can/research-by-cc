@@ -27,8 +27,8 @@ paths:
 改行は `.gitattributes` が拡張子ベースで固定する。ただし**その保護が届く範囲は、`.gitattributes` が置かれた
 ディレクトリ以下だけ**である点に注意する:
 
-- 本キットの payload に乗るのは **`.claude/.gitattributes`** だけなので、**`.claude/` の外**（利用先リポジトリの
-  ルート直下や `scripts/` 等）は、そのリポジトリ自身が `.gitattributes` を持っていなければ**無防備**。
+- **`.claude/.gitattributes` が守るのは `.claude/` 以下だけ**。**`.claude/` の外**（リポジトリのルート直下や
+  `scripts/` 等）は、そのディレクトリか親のディレクトリに `.gitattributes` が無ければ**無防備**。
 - 迷ったら `git check-attr text eol -- <path>` で確かめる。属性が付いていない `.sh` は
   `core.autocrlf=true`（Git for Windows 既定）の clone で CRLF 化し、`set -euo pipefail` 下で `$'\r'` により落ちる。
 
@@ -105,7 +105,7 @@ head -c 3 <file> | od -An -tx1
   非 UTF-8 のファイルに対する `Edit` / `Write` の拒否メッセージは「文字コードを保つシェルコマンドで直す」を勧め、
   `Write` のもの（v2.1.302 で実測）はさらに iconv や PowerShell の `Set-Content -Encoding`、「消してから `Write`
   する」まで挙げるが、`.bat` には従わない。
-  **例外は CP932 + CRLF で書くキット同梱の 2 つだけ**: `bat_cp932_guard.py new`（新規作成）と、`win-file-encoding`
+  **例外は CP932 + CRLF で書く、この規約に同梱の 2 つだけ**: `bat_cp932_guard.py new`（新規作成）と、`win-file-encoding`
   skill の `convert_encoding.py --to-win`（UTF-8 で保存されてしまった `.bat` の修復・一括変換。hook が Read を止めた
   ときに案内する。実行後は作業コピーが古くなるので、原本を Read し直してから編集する）。
 

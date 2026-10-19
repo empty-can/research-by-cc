@@ -8,7 +8,7 @@ regressed here (v2.1.77: Write silently converted line endings when overwriting
 a CRLF file; v2.1.89: Edit/Write doubled CRLF on Windows), and the docs specify
 no contract for either, so this is checked rather than assumed.
 
-Measured on this repo: Edit preserves BOM + CRLF, Write does not -- a .ps1
+Measured (Claude Code on Windows): Edit preserves BOM + CRLF, Write does not -- a .ps1
 created with Write lands as BOM-less LF.
 
 Wired as a PostToolUse hook on Edit/Write of PowerShell files (see settings.json).
