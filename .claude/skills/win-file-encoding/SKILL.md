@@ -19,18 +19,17 @@ description: >
 ## 実行パス（最初に確認）
 
 スクリプトは skill に同梱されている。下のコマンドの先頭は skill 変数 `CLAUDE_SKILL_DIR`（この `SKILL.md` が
-あるディレクトリ。Claude Code が skill の読み込み時に本文中で展開する・v2.1.69〜）で指してあるので、配布方式
-（コピー展開・`--add-dir`・plugin）にも CWD にも依存しない:
+あるディレクトリ。Claude Code が skill の読み込み時に本文中で展開する・v2.1.69〜）で指してあるので、skill の
+置き場所（プロジェクトの `.claude/skills/`・plugin など）にも CWD にも依存しない:
 
 ```
 python "${CLAUDE_SKILL_DIR}/scripts/convert_encoding.py" <オプション> "<file>"
 ```
 
-- 実行コマンドは **`python`**（本キットの想定環境では `python3` に PATH が通らないため）。変数代入を使わない
+- 実行コマンドは **`python`**（Windows では `python3` が PATH に無い環境があるため）。変数代入を使わない
   1 行なので、Bash でも PowerShell（Windows では Claude の主シェル）でもそのまま動く。
-- skill を経由せず手で実行するとき（変数が展開されない）は、コピー展開先のリポジトリルートを CWD にして
-  `.claude/skills/win-file-encoding/scripts/convert_encoding.py` を指す（hook のメッセージもこのパス。`--add-dir`
-  で参照しているなら `<Share>` 側の同じパス）。
+- skill を経由せず手で実行するとき（変数が展開されない）は、リポジトリのルートを CWD にして
+  `.claude/skills/win-file-encoding/scripts/convert_encoding.py` を指す（hook のメッセージもこのパス）。
 - マッピング表 `references/cp932-mapping.json` はスクリプトが `__file__` 基準で自動解決する。
 
 ## 使いどころ
@@ -83,8 +82,8 @@ python "${CLAUDE_SKILL_DIR}/scripts/convert_encoding.py" <オプション> "<fil
 
 ## 依存・仕様
 
-- `python`（CPython 3.x。`cp932` コーデックは標準同梱。キットとしての要件は hook と合わせて 3.10 以上 ――
-  README「動作環境」）。
+- `python`（CPython 3.x。`cp932` コーデックは標準同梱。hook と合わせた要件は 3.10 以上 ――
+  `.claude/rules/win-file-encoding.md`）。
 - 改行は CR/CRLF 混在を一旦 LF に正規化してから目的の改行へ統一する（決定論的）。
 - 報告は UTF-8 で出力する（Windows の Python は既定でパイプへ CP932 で書き、シェルツールの出力が化けるため）。
 - 背景と化け文字の根拠は `references/mojibake-notes.md`。

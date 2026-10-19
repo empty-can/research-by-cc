@@ -1,7 +1,7 @@
 # =============================================================================
 # .claude/.gitattributes ― .claude/ 配下の資産の保存形式（改行）を拡張子ベースで固定
 # =============================================================================
-# 規約の正本は rules/win-file-encoding.md。行は base-dev-kit-for-cc の .claude/.gitattributes から写した（2026-10-19）。
+# 規約の正本は rules/win-file-encoding.md。
 # 保護が届くのは .claude/ 以下だけ。活動フォルダ（research-for-*/）は、それぞれの .gitattributes で決める。
 #
 # ⚠ `text`（強制）ではなく `text=auto` を使う。強制するとバイナリ検出が無効になり、
