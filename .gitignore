@@ -16,6 +16,10 @@ CLAUDE.local.md
 .claude/agent-memory-local/
 **/.claude/agent-memory-local/
 
+# Claude Code: .bat の UTF-8 作業コピー（hooks/bat_cp932_guard.py が作る。rules/win-file-encoding.md）
+.claude/.bat-shadow/
+**/.claude/.bat-shadow/
+
 # Claude Code: 個人スクラッチ（一時メモ・下書きの置き場）
 scratch/
 **/scratch/
