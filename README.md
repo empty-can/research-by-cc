@@ -67,7 +67,7 @@ research-for-xxx/               # XXX に関する調査用のフォルダ。調
 調査テーマ固有で必要な MCP サーバーは `research-for-xxx/.mcp.json` に定義する。
 
 MCP サーバーの起動には Node.js（v18 以上）が必要。  
-GitHub MCP を使う場合は `GITHUB_TOKEN` 環境変数（OS レベルで設定）が必要。
+GitHub MCP を使う場合は `GITHUB_PERSONAL_ACCESS_TOKEN` 環境変数（OS レベルで設定）が必要（GitHub MCP サーバの仕様）。
 
 ## 調査用フォルダ（research-for-xxx）一覧
 
