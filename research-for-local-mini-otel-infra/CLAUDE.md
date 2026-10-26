@@ -33,7 +33,8 @@ Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ロ�
 
 ## ブランチ
 
-- 作業ブランチ: Phase 0 は `phase/local-mini-otel-infra/00_activity-plan`、Phase 1 は `phase/local-mini-otel-infra/01_basic-research`（いずれも `feature/local-mini-otel-infra` から作成）
+- 作業ブランチ: Phase 0 は `phase/local-mini-otel-infra/00_activity-plan`、Phase 1 は `phase/local-mini-otel-infra/01_basic-research`、Phase 2 は `phase/local-mini-otel-infra/02_design`（いずれも `feature/local-mini-otel-infra` から作成）。Phase を終えたら、その作業ブランチの先端まで feature を fast-forward し、次の Phase のブランチを feature から切る
+- Phase 1 の残作業（1-10・V-2b 等）は、Phase 2 と並行して `02_design` で行う。`01_basic-research` は f2b42c8（Phase 1 の条件付き完了の時点）で止めて残す（2026-10-26 の作業指示者の承認）
 - `feature/local-mini-otel-infra` は develop から派生している（2026-09-27 のブランチ再編で、cve-triage 系列から切り離して本活動固有のコミットだけを載せ直した。計画書 §7 #1）。取り込み先は develop（ルート CLAUDE.md「ブランチ運用ルール」）
 
 ## 参照リソース
@@ -131,3 +132,4 @@ Claude Code（以下 cc）の OpenTelemetry テレメトリを、**Windows ロ�
 | 2026-10-25 | 進捗に、計画書の承認と保留の組み替えとそのクロスレビューの完了を足した |
 | 2026-10-26 | J-7（計画書 v2.4 の承認）と §2 の報告の確認を受けて、進捗の承認の行を完了にし、計画書の正本を v2.4 にした |
 | 2026-10-26 | Phase 1 を条件付き完了にし、Phase 2 に着手した（作業指示者の承認）。ルート CLAUDE.md の GitHub MCP の変数名の直し（develop の 58112fa）を cherry-pick で取り込んだ |
+| 2026-10-26 | Phase 2 の作業ブランチ `02_design` を足した（feature を Phase 1 の先端まで fast-forward し、feature から切った。作業指示者の承認） |
