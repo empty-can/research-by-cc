@@ -222,7 +222,7 @@ Claude Code / Anthropic API / Claude Agent SDK 等の Anthropic 公式情報を�
 - **OS**: Windows 11（プライマリ） — bash シェル経由で操作。パスは `C:\cc-workspace\research-by-cc` 形式
 - **Node.js v18+** — MCP サーバー起動用
 - **MCP サーバー** — ルート `.mcp.json` は空。`anthropic-docs` / `context7` / `fetch` / `github` はユーザレベル（`~/.claude/`）で定義済み。テーマ固有の MCP は `research-for-xxx/.mcp.json` に追加する
-- **GitHub MCP** — `GITHUB_TOKEN` 環境変数（OS レベル）が必要
+- **GitHub MCP** — `GITHUB_PERSONAL_ACCESS_TOKEN` 環境変数（OS レベル）が必要（GitHub MCP サーバの仕様）。`gh` CLI は `GH_TOKEN`・`GITHUB_TOKEN`（この順に優先）を読む
 - **Git** — Git 化済み・GitHub 公開済み。コミット運用は「Git 運用ルール」節を参照
 
 ## Git 運用ルール
