@@ -3,11 +3,11 @@
 | 項目 | 内容 |
 |---|---|
 | 位置付け | [統合の設計書](設計書.md)の【別紙】。設計書 5 本の「未確認・【推定】に依った決めごと」の表の行と、本文で Phase 3 で確かめるとした事柄を、run（何をどう動かすか）ごとに並べた索引である。決めごと・依った事柄・崩れたときの直しの正本は元の行にあり、本書には写さない |
-| 状態 | v0.4（2026-10-30）。統合の設計書 v0.6 と組 A v0.5・組 B v0.7・組 C v0.6・組 D v0.6 の行番号による |
+| 状態 | v0.5（2026-10-30）。統合の設計書 v0.7 と組 A v0.6・組 B v0.8・組 C v0.7・組 D v0.7 の行番号による |
 | 想定読者 | Phase 3 の担当（PoC の計画を立て、PoC 報告書で確かめた事柄の抜けを数える）、作業指示者（Phase 3 で何を確かめるかを見る）。どちらも本活動の文脈を持つ前提である |
 | 前提 | 元の表は、[統合 §8](設計書.md#sec-8)、[組 A §9](../01.全体構成/設計書.md#sec-9)、[組 B §7](../02.データモデルと集計/設計書.md#sec-7)、[組 C §5](../03.作業分類タグ/設計書.md#sec-5)、[組 D §6](../04.有効化とデータ保全/設計書.md#sec-6) である。Phase 1 から引き継いだ確認項目（判定の目安・測り方・標本数）の正本は [V-ID 別紙 §2](../../01.基礎調査/99.基礎調査まとめ/【別紙】V-ID別状況とPhase3実測項目.md#sec-2) の本環境の表で、本書は同じ事柄の行の名前を「見るもの」の列に書くだけにする |
 
-**読み方**: [§0](#sec-0) で run を選び、その節の表を上から読む。「元の行」は元の表の番号（例「組 D §6 の 11」）か、本文の節である。「見るもの」は、観測の置き場所（取込の記録の項目、S1 の表、受信サーバの動作の記録（`run\receiver\`）の項目、debug log）である。崩れたときの直しは元の行にある。PoC 報告書は、本書の行ごとに、確かめた・未観測で閉じた・確かめられなかったのどれかを書く。全体で約 12〜17 分（約 10,000 字。600〜800 字/分）。
+**読み方**: [§0](#sec-0) で run を選び、その節の表を上から読む。「元の行」は元の表の番号（例「組 D §6 の 11」）か、本文の節である。「見るもの」は、観測の置き場所（取込の記録の項目、S1 の表、受信サーバの動作の記録（`run\receiver\`）の項目、debug log）である。崩れたときの直しは元の行にある。PoC 報告書は、本書の行ごとに、確かめた・未観測で閉じた・確かめられなかったのどれかを書く。全体で約 13〜18 分（約 10,800 字。600〜800 字/分）。
 
 <a id="sec-0"></a>
 ## 0. run の一覧
@@ -46,7 +46,7 @@
 
 | 元の行 | 確かめる事柄 | 見るもの |
 |---|---|---|
-| 組 D §6 の 1 | `--setting-sources` から `user` を外すと、ユーザ settings の `enabledPlugins` などが読まれない | 前の起動の仕方の run と、属性集合・`plugin_loaded`・`hook_registered`・`effort` を並べる |
+| 組 D §6 の 1 | `--setting-sources` から `user` を外すと、ユーザ settings の `enabledPlugins` などが読まれない（cc 2.1.314 以降で確かめる。2.1.313 以前は、外したユーザ settings から auto mode の規則と保存した承認などが入りえた） | 前の起動の仕方の run と、属性集合・`plugin_loaded`・`hook_registered`・`effort` を並べる |
 | 組 D §6 の 11 | 変数を有効にすれば、Claude Code が起こす対話のセッションも transcript を残す。Phase 1 の i3・i4 は入れ子の扱いによる | 変数を有効にした対話の計測用のセッション（正常に終えたものと、強制終了したもの）と、有効にしないものの、transcript のファイルの有無 |
 | 組 D §6 の 13 | 起こすプロセスの環境変数の `LMO_DATA_DIR` を、cc が起こす hook も受け継ぐ | L1 の hook を足した計測用のセッションの、計測のデータの根と日常のデータの根の `labels\l1\` にあるそのセッションのファイル（この run に L1 の条件が無ければ、[§6](#sec-6) の比較実験で見る） |
 
@@ -70,6 +70,8 @@
 | 組 B §7 の 13 | `stop_reason` の null で、未確定の usage を見分けられる | ランチャのセッションの `transcript_usage` の、`final` の行の思考トークンと経路 (ii) の値（`raw_body_usage`）の一致と、`thinking_status` ごとの件数 |
 | 組 B §7 の 16 | OTel の記録の無いセッションを transcript の usage だけで数える（`is_sidechain` の分け方を含む） | `usage_record` の `transcript_only` の行と、取込の記録の `otel_gaps`。OTel と transcript の両方があるセッションの、`is_sidechain` から引いた区分と `query_source_class`、トークン 4 種の合計 |
 | 組 B §7 の 17 | 2.1.310 以前の `-p`・Agent SDK の transcript でも、`request_id` ごとの最後の行が確定値で、取り消された message の行が無い | 過去の `-p`・SDK の transcript の、`parentUuid` が後ろの行を指す行（順の崩れ）の数と、同じ `request_id` の最後の行の `stop_reason` |
+| 組 B §7 の 21 | 2.1.311 以前の、端末で resume を 2 回以上したセッションの transcript に、resume の後の最初の応答の行の欠けがあるか | resume を 2 回以上した過去のセッションの transcript で、resume の後の最初の `user` の行に応える `assistant` の行があるか（OTel の記録もあるセッションでは、OTel にあって transcript に無い要求の数も） |
+| 組 B §1.9 | 2.1.300 以降の `api_request` に、TTL 別の内訳が 2 つとも 0 なのに `cache_creation_tokens` が正の行があるか（あれば内訳の無い行として計算する） | 受信を始めた後の `usage_record` のうち、`cc_version_num` が 2.1.300 以降で、2 つの内訳が 0 で `cache_creation_tokens` が正の行の数 |
 | 組 D §6 の 5 | transcript の usage の取込は、規則の誤りの余地が小さい | 取込の記録の `transcript` の行数と読めない行の数、取り込んだ usage と OTel の値の差 |
 | 組 D §6 の 6 | 更新から 30 分で、書きかけの末尾と壊れた行を分けられる | 取込の記録の `transcript` の、書いている途中として次に回したファイルの数と、`unreadable` |
 | 組 D §6 の 7 | 種類 2 の行に usage が入らない | `unreadable` の種類 2 の行（数え方は [1-9 §5](../../01.基礎調査/09.cc2.1.304差分の確認/調査報告書.md#sec-5)） |
@@ -95,6 +97,7 @@
 | 組 D §6 の 14 | ふだんの取込の所要の最大が 30 秒に収まる（取込の間隔の下限 5 分の前提） | 取込の記録の `started_at`・`ended_at`（日常の初回の取込を除く回の所要の最大。`trigger` ごとにも分ける） |
 | 組 B §7 の 2 | `query_source_map` の写し方 | 日常の 1 日分以上の、metrics の `query_source` の値ごとのトークン数と、`usage_record` の `query_source_class` ごとのトークン数、`unknown` の行の数 |
 | 組 B §7 の 5 | アイドル時の compaction を空いた時間で見分ける | `compaction` の `compact_kind`（V-ID 別紙 §2 の「アイドル時の compaction」の行） |
+| 組 B §1.10 | 2.1.314 以降、VS Code の telemetry の設定が off の拡張のセッションでも、アイドル時の compaction が動くか（docs と changelog のどちらが合うか） | VS Code の拡張のセッションの `compaction` の `trigger=auto` の行と `compact_kind`、そのときの VS Code の telemetry の設定（Phase 3 で VS Code を使うときだけ。使わなければ未観測で閉じる） |
 | 組 B §2.1 | 1 回の compaction に compact の要求が 2 件になる頻度（2.1.311 の要約の再要求） | 同じセッションの `compaction` 1 件ごとの、`query_source=compact` の `usage_record` の数と、`compaction` の `duration_ms` |
 | 組 B §2.6 | 2.1.311 以降の span の `model` に `[1m]` が付くか | `llm_span` の `query_source_safe=auto_mode` の `model` と `model_key`、`cost_status` が `unpriced_model` の件数 |
 | 組 B §7 の 7 | `/clear` の前後を hook と時刻で結ぶ | 日常の 2 週間の、`session_start_record` の `source` が `clear` の行と `session_link`（結べなかった数と、結んだ組の `gap_sec`）。結んだ組から選んだ 5 組を作業指示者が見る |
@@ -123,7 +126,7 @@
 | 組 B §7 の 1 | `subagent_key` が一意である（入れ子・fork・span の `agent_id` の `acompact-` の形の値・対話モード） | S1 の `session_id` ごとの `agent_id` の重複の数 |
 | 組 B §7 の 4 | `--resume` と compact の前後の `session.id` | `--resume` と compact の run の、前後の `session_id` |
 | 組 B §7 の 18 | `quota_check` の量（トークン数か `max_tokens`）が debug log に出るか | debug log を取る計測用のセッションの `quota_check` の行の数と、その行のトークン数・`max_tokens` |
-| 組 B §1.6 | 2.1.311 以降の対話で、`ultrathink` のターンの `effort` が `xhigh` になり、同じ `prompt_id` の中で effort が変わる | 対話の計測用のセッションで `ultrathink` を打ったターン（途中で打つ場合を含む）の `api_request` の `effort` と、サブエージェントの要求の `effort` |
+| 組 B §1.6 | 2.1.311 以降の対話で、`ultrathink` のターンの `effort` が `xhigh` になり、同じ `prompt_id` の中で effort が変わる。2.1.312 以降、動いている途中の `/effort` の後の要求の `effort` が当たっている level で、キューに入れたメッセージが同じ `prompt_id` に入るか | 対話の計測用のセッションで、`ultrathink` を打ったターン（途中で打つ場合を含む）と、動いている途中に `/effort` で level を選び直してメッセージをキューに入れたターンの、`api_request` の `effort` と `prompt_id`、サブエージェントの要求の `effort` |
 | 組 C §5 の 5 | `performance.now()` の起点が process の起動である | debug log の hook ごとの行と `hook_ms` の差 |
 | 組 C §5 の 6 | Esc で送り直したプロンプトの `prompt_id` が前と同じか | 対話で Esc の後に送り直したプロンプトの、`l1_hook_record` の行の数と `prompt_id`（[1-10 §5.3](../../01.基礎調査/10.cc2.1.310差分の確認/調査報告書.md#sec-5-3)） |
 | 組 C §5 の 15 | `OTEL_LOG_USER_PROMPTS` を無効にしたセッションの `user_prompt` の本文が `<REDACTED>` の値になる | 変数を無効にした条件の計測用のセッションの、S2 の `user_prompt` の本文の値（その条件が無ければ未観測で閉じる） |
@@ -179,3 +182,4 @@
 | 2026-10-27 | v0.2 | cc 2.1.311 の差分の確認（1-11）で設計書に足した行を入れた |
 | 2026-10-29〜2026-10-30 | v0.3 | 承認前の再設計と全体点検の直しで設計書に足した行を入れた。改訂の経緯を別紙に分けた |
 | 2026-10-30 | v0.4 | クロスレビュー（2026-10-30）の指摘の反映で設計書に足した行と、変わった見るものを入れた。続けて、配り口の CORS の試験の `Origin` のヘッダと、`LMO_OTLP_HOST` の行を足した |
+| 2026-10-30 | v0.5 | cc 2.1.312〜2.1.314 の差分の確認（1-12）で設計書に足した行と、変わった確かめる事柄を入れた |
