@@ -63,9 +63,9 @@
 
 | 元の行 | 確かめる事柄 | 見るもの |
 |---|---|---|
-| 統合 §8 の 3・組 A §9 の 9 | transcript に `prompt_id` に当たるキーがあるか（縮退運用で作業分類を結べるか） | `schema_observation` の信号 `transcript` の、`user` レコードのキーの集合 |
+| 統合 §8 の 3・組 A §9 の 9 | transcript に `prompt_id` に当たるキーがあるか（縮退運用で作業分類を紐づけられるか） | `schema_observation` の信号 `transcript` の、`user` レコードのキーの集合 |
 | 統合 §8 の 4 | S2 を長く残す利点が小さい（J-35 の推奨の前提） | 取込の記録の `trigger` が `rebuild`（作り直し。[組 A §2.8](../01.全体構成/設計書.md#sec-2-8)）の回の数・所要（`started_at`・`ended_at`）と、作り直した理由、S1 のファイルを戻した回数（Phase 6 まで続けて数える） |
-| 統合 §6.1 の G2-09 | `request_id` が付かない場合の紐づけ方（計画書 §7 #8 の選択肢）。本環境の記録で `request_id` を使わずに、キーを使わない突き合わせと、transcript の usage を紐づけずに別に集計する形を試して `request_id` で紐づけた結果と比べ、両方の記録に付く別の ID（`message.id`・`message_uuid`・`client_request_id`・`prompt.id` など）で紐づけられるかも確かめる（結果は Phase 7 で §7 #8 を諮るときの材料） | キーを使わない突き合わせ（`session.id`・`query_source`・`model`・時刻・トークン数。レスポンスボディの側は `prompt.id`・`event.sequence` も）と別の ID の候補のそれぞれで紐づけた組が、`request_id` で紐づけた組と一致した割合と、誤って紐づけた行・紐づけられなかった行の数（別の ID は、両方の記録に付く割合も）<br>紐づけずに出したモデル × effort ごとの思考比率と、`request_id` で紐づけて出した比率の差 |
+| 統合 §6.1 の G2-09 | `request_id` が付かない場合の紐づけ方（計画書 §7 #8 の選択肢）。本環境の記録で `request_id` を使わずに、計測値を使った突き合わせと、transcript の usage を紐づけずに別に集計する形を試して `request_id` で紐づけた結果と比べ、両方の記録に付く別の ID（`message.id`・`message_uuid`・`client_request_id`・`prompt.id` など）で紐づけられるかも確かめる（結果は Phase 7 で §7 #8 を諮るときの材料） | 計測値を使った突き合わせ（`session.id`・`query_source`・`model`・時刻・トークン数。レスポンスボディの側は `prompt.id`・`event.sequence` も）と別の ID の候補のそれぞれで紐づけた組が、`request_id` で紐づけた組と一致した割合と、誤って紐づけた行・紐づけられなかった行の数（別の ID は、両方の記録に付く割合も）<br>紐づけずに出したモデル × effort ごとの思考比率と、`request_id` で紐づけて出した比率の差 |
 | 組 A §9 の 12 | 1 回の取込を 1 つのトランザクションにしても、初回の取込でメモリと WAL のファイルの大きさに困らない。ロックを待つ上限を置くかの材料 | 日常の初回の取込とふだんの取込の、取込の記録の `started_at`・`ended_at`、WAL のファイルの大きさの最大、lmo-ingest のメモリの最大 |
 | 組 A §9 の 13 | 本活動の間の S2 の全体を読む作り直しを 1 つのトランザクションにしても、メモリと WAL のファイルの大きさに困らない | Phase 3 の終わりに、Phase 3 の間に溜まった S2 で打つ作り直しの、取込の記録（`trigger` が `rebuild` の回）の `started_at`・`ended_at` と、WAL のファイルの大きさの最大（Phase 6 までの量に延ばす） |
 | 組 B §7 の 13 | `stop_reason` の null で、未確定の usage を見分けられる | ランチャのセッションの `transcript_usage` の、`final` の行の思考トークンと経路 (ii) の値（`raw_body_usage`）の一致と、`thinking_status` ごとの件数 |
@@ -77,7 +77,7 @@
 | 組 D §6 の 5 | transcript の usage の取込は、規則の誤りの余地が小さい | 取込の記録の `transcript` の行数と読めない行の数、取り込んだ usage と OTel の値の差 |
 | 組 D §6 の 6 | 更新から 30 分で、書きかけの末尾と壊れた行を分けられる | 取込の記録の `transcript` の、書いている途中として次に回したファイルの数と、`unreadable` |
 | 組 D §6 の 7 | 種類 2 の行に usage が入らない | `unreadable` の種類 2 の行（数え方は [VerUP IAR(cc v2.1.309) §5](../../80.ccバージョン差分の確認/影響調査報告書_cc-v2.1.309.md#sec-5)） |
-| 組 D §6 の 9 | transcript に識別属性が入らない | 取込が読む値（usage と鍵）に、識別属性に当たる値があるか |
+| 組 D §6 の 9 | transcript に識別属性が入らない | 取込が読む値（usage とキー）に、識別属性に当たる値があるか |
 | 組 D §6 の 12 | 記録より前の計測（Phase 1・Phase 2 の probe）の transcript が、日常の初回の取込に入る | probe の作業フォルダの `projects` の下の transcript の数 |
 | 組 D §2.4 | 読めない transcript の行を数え、飛ばして取込を止めない | 取込の記録の `unreadable` と、取込の `status` |
 | 組 D §2.4 | 未知の記録型（2.1.311 の `tools-used` など）を読まず、型ごとの行数を書く | 取込の記録の `transcript` の未知の型ごとの行数（長いセッションでの `tools-used` の件数） |
@@ -102,7 +102,7 @@
 | 組 B §1.10 | 2.1.314 以降、VS Code の telemetry の設定が off の拡張のセッションでも、アイドル時の compaction が動くか（docs と changelog のどちらが合うか） | VS Code の拡張のセッションの `compaction` の `trigger=auto` の行と `compact_kind`、そのときの VS Code の telemetry の設定（Phase 3 で VS Code を使うときだけ。使わなければ未観測で閉じる） |
 | 組 B §2.1 | 1 回の compaction に compact の要求が 2 件になる頻度（2.1.311 の要約の再要求） | 同じセッションの `compaction` 1 件ごとの、`query_source=compact` の `usage_record` の数と、`compaction` の `duration_ms` |
 | 組 B §2.6 | 2.1.311 以降の span の `model` に `[1m]` が付くか | `llm_span` の `query_source_safe=auto_mode` の `model` と `model_key`、`cost_status` が `unpriced_model` の件数 |
-| 組 B §7 の 7 | `/clear` の前後を hook と時刻で結ぶ | 日常の 2 週間の、`session_start_record` の `source` が `clear` の行と `session_link`（結べなかった数と、結んだ組の `gap_sec`）。結んだ組から選んだ 5 組を作業指示者が見る |
+| 組 B §7 の 7 | `/clear` の前後を hook と時刻で紐づける | 日常の 2 週間の、`session_start_record` の `source` が `clear` の行と `session_link`（紐づけられなかった数と、紐づけた組の `gap_sec`）。紐づけた組から選んだ 5 組を作業指示者が見る |
 | 組 B §7 の 8 | data residency と 1 回ごとの料金の当て方 | `api_request` の `inference_geo`、transcript の usage の `server_tool_use`、見なし費用の検算のずれ |
 | 組 B §7 の 10・組 B §7 の 15 | 検算の合格の幅と、単価の未確認 5 件 | V-ID 別紙 §2 の「見なし費用の検算」の行（Opus 5.5 は要求が出たとき） |
 | 組 B §7 の 11 | traces を含めれば `quota_check` 以外は漏れない | V-ID 別紙 §2 の「OTel の logs（`api_request`）と metrics に出ない API 呼び出しの件数」の行 |
@@ -185,4 +185,4 @@
 | 2026-10-29〜2026-10-30 | v0.3 | 承認前の再設計と全体点検の直しで設計書に足した行を入れた。改訂の経緯を別紙に分けた |
 | 2026-10-30 | v0.4 | クロスレビュー（2026-10-30）の指摘の反映で設計書に足した行と、変わった見るものを入れた。続けて、配り口の CORS の試験の `Origin` のヘッダと、`LMO_OTLP_HOST` の行を足した |
 | 2026-10-30 | v0.5 | cc 2.1.312〜2.1.314 の差分の確認（1-12）で設計書に足した行と、変わった確かめる事柄を入れた |
-| 2026-11-08 | v0.5 | 「1-9」「1-10」の、それぞれ「VerUP IAR(cc v2.1.309)」「VerUP IAR(cc v2.1.310)」への置き換えとリンク先のパスの修正（影響調査報告書を 80.ccバージョン差分の確認 へ移したため）<br>§4 への、`request_id` が付かない場合の紐づけ方の試し（別の ID で紐づけられるかの確かめを含む）と、transcript の `requestId` の無い行の束ね方の 2 行の追加（2026-11-02・2026-11-08 の作業指示者の決め） |
+| 2026-11-08 | v0.5 | 「1-9」「1-10」の、それぞれ「VerUP IAR(cc v2.1.309)」「VerUP IAR(cc v2.1.310)」への置き換えとリンク先のパスの修正（影響調査報告書を 80.ccバージョン差分の確認 へ移したため）、語の言い換え（「鍵」を「キー」に、「結ぶ」を「紐づける」に。用語集の語の改名を含む。作業指示者の指摘）<br>§4 への、`request_id` が付かない場合の紐づけ方の試し（別の ID で紐づけられるかの確かめを含む）と、transcript の `requestId` の無い行の束ね方の 2 行の追加（2026-11-02・2026-11-08 の作業指示者の決め） |
