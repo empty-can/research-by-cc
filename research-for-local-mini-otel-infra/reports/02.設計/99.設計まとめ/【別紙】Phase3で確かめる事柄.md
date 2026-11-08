@@ -65,12 +65,14 @@
 |---|---|---|
 | 統合 §8 の 3・組 A §9 の 9 | transcript に `prompt_id` に当たるキーがあるか（縮退運用で作業分類を結べるか） | `schema_observation` の信号 `transcript` の、`user` レコードのキーの集合 |
 | 統合 §8 の 4 | S2 を長く残す利点が小さい（J-35 の推奨の前提） | 取込の記録の `trigger` が `rebuild`（作り直し。[組 A §2.8](../01.全体構成/設計書.md#sec-2-8)）の回の数・所要（`started_at`・`ended_at`）と、作り直した理由、S1 のファイルを戻した回数（Phase 6 まで続けて数える） |
+| 統合 §6.1 の G2-09 | `request_id` が付かない場合の結び方（計画書 §7 #8 の選択肢）。本環境の記録で `request_id` を使わずに、鍵を使わない突き合わせと、transcript の usage を結ばずに別に集計する形を試し、`request_id` で結んだ結果と比べる（結果は Phase 7 で §7 #8 を諮るときの材料） | 鍵を使わない突き合わせ（`session.id`・`query_source`・`model`・時刻・トークン数。レスポンスボディの側は `prompt.id`・`event.sequence` も）で結んだ組が、`request_id` で結んだ組と一致した割合と、誤って結んだ行・結べなかった行の数<br>結ばずに出したモデル × effort ごとの思考比率と、`request_id` で結んで出した比率の差 |
 | 組 A §9 の 12 | 1 回の取込を 1 つのトランザクションにしても、初回の取込でメモリと WAL のファイルの大きさに困らない。ロックを待つ上限を置くかの材料 | 日常の初回の取込とふだんの取込の、取込の記録の `started_at`・`ended_at`、WAL のファイルの大きさの最大、lmo-ingest のメモリの最大 |
 | 組 A §9 の 13 | 本活動の間の S2 の全体を読む作り直しを 1 つのトランザクションにしても、メモリと WAL のファイルの大きさに困らない | Phase 3 の終わりに、Phase 3 の間に溜まった S2 で打つ作り直しの、取込の記録（`trigger` が `rebuild` の回）の `started_at`・`ended_at` と、WAL のファイルの大きさの最大（Phase 6 までの量に延ばす） |
 | 組 B §7 の 13 | `stop_reason` の null で、未確定の usage を見分けられる | ランチャのセッションの `transcript_usage` の、`final` の行の思考トークンと経路 (ii) の値（`raw_body_usage`）の一致と、`thinking_status` ごとの件数 |
 | 組 B §7 の 16 | OTel の記録の無いセッションを transcript の usage だけで数える（`is_sidechain` の分け方を含む） | `usage_record` の `transcript_only` の行と、取込の記録の `otel_gaps`。OTel と transcript の両方があるセッションの、`is_sidechain` から引いた区分と `query_source_class`、トークン 4 種の合計 |
 | 組 B §7 の 17 | 2.1.310 以前の `-p`・Agent SDK の transcript でも、`request_id` ごとの最後の行が確定値で、取り消された message の行が無い | 過去の `-p`・SDK の transcript の、`parentUuid` が後ろの行を指す行（順の崩れ）の数と、同じ `request_id` の最後の行の `stop_reason` |
 | 組 B §7 の 21 | 2.1.311 以前の、端末で resume を 2 回以上したセッションの transcript に、resume の後の最初の応答の行の欠けがあるか | resume を 2 回以上した過去のセッションの transcript で、resume の後の最初の `user` の行に応える `assistant` の行があるか（OTel の記録もあるセッションでは、OTel にあって transcript に無い要求の数も） |
+| 組 B §7 の 25 | transcript の `requestId` の無い行を 1 件の要求に束ねる規則（今は無い） | 既存の transcript の、`requestId` の無い応答の行の数と、その行を束ねられる項目（応答の行の `message` の `id` など）。`requestId` のある行で、その項目の束が `requestId` の束と一致するか |
 | 組 B §1.9 | 2.1.300 以降の `api_request` に、TTL 別の内訳が 2 つとも 0 なのに `cache_creation_tokens` が正の行があるか（あれば内訳の無い行として計算する） | 受信を始めた後の `usage_record` のうち、`cc_version_num` が 2.1.300 以降で、2 つの内訳が 0 で `cache_creation_tokens` が正の行の数 |
 | 組 D §6 の 5 | transcript の usage の取込は、規則の誤りの余地が小さい | 取込の記録の `transcript` の行数と読めない行の数、取り込んだ usage と OTel の値の差 |
 | 組 D §6 の 6 | 更新から 30 分で、書きかけの末尾と壊れた行を分けられる | 取込の記録の `transcript` の、書いている途中として次に回したファイルの数と、`unreadable` |
@@ -183,4 +185,4 @@
 | 2026-10-29〜2026-10-30 | v0.3 | 承認前の再設計と全体点検の直しで設計書に足した行を入れた。改訂の経緯を別紙に分けた |
 | 2026-10-30 | v0.4 | クロスレビュー（2026-10-30）の指摘の反映で設計書に足した行と、変わった見るものを入れた。続けて、配り口の CORS の試験の `Origin` のヘッダと、`LMO_OTLP_HOST` の行を足した |
 | 2026-10-30 | v0.5 | cc 2.1.312〜2.1.314 の差分の確認（1-12）で設計書に足した行と、変わった確かめる事柄を入れた |
-| 2026-11-08 | v0.5 | 「1-9」「1-10」を、それぞれ「VerUP IAR(cc v2.1.309)」「VerUP IAR(cc v2.1.310)」に置き換えた（影響調査報告書を 80.ccバージョン差分の確認 へ移したため）。リンク先のパスも直した |
+| 2026-11-08 | v0.5 | 「1-9」「1-10」の、それぞれ「VerUP IAR(cc v2.1.309)」「VerUP IAR(cc v2.1.310)」への置き換えとリンク先のパスの修正（影響調査報告書を 80.ccバージョン差分の確認 へ移したため）<br>§4 への、`request_id` が付かない場合の結び方の試しと、transcript の `requestId` の無い行の束ね方の 2 行の追加（2026-11-02 の作業指示者の決め） |
